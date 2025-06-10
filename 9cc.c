@@ -33,8 +33,8 @@ typedef enum {
   ND_NEQ, // !=
   ND_LT,  // <
   ND_LTE, // <=
-  ND_BT,  // >
-  ND_BTE, // >=
+  ND_GT,  // >
+  ND_GTE, // >=
   ND_NUM, // 整数
 } NodeKind;
 
@@ -203,9 +203,9 @@ Node *relational() {
     } else if (consume("<=")) {
       node = new_node(ND_LTE, node, add());
     } else if (consume(">")) {
-      node = new_node(ND_BT, node, add());
+      node = new_node(ND_GT, node, add());
     } else if (consume(">=")) {
-      node = new_node(ND_BTE, node, add());
+      node = new_node(ND_GTE, node, add());
     } else {
       return node;
     }
@@ -308,14 +308,14 @@ void gen(Node *node) {
       printf("  setle al\n");
       printf("  movzb rax, al\n");
       break;
-    case ND_BT:
-      printf("  cmp rdi, rax\n");
-      printf("  setl al\n");
+    case ND_GT:
+      printf("  cmp rax, rdi\n");
+      printf("  setg al\n");
       printf("  movzb rax, al\n");
       break;
-    case ND_BTE:
-      printf("  cmp rdi, rax\n");
-      printf("  setle al\n");
+    case ND_GTE:
+      printf("  cmp rax, rdi\n");
+      printf("  setge al\n");
       printf("  movzb rax, al\n");
       break;
     case ND_NUM:

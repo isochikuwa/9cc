@@ -348,5 +348,7 @@ int main(int argc, char **argv) {
   // それをRAXにロードして関数からの返り値とする
   printf("  pop rax\n");
   printf("  ret\n");
+  printf("\n");
+  printf(".section .note.GNU-stack,\"\",@progbits\n");
   return 0;
 }

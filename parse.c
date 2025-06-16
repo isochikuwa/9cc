@@ -9,6 +9,13 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   return node;
 }
 
+Node *new_node_ident(Token *tok) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_LVAR;
+  node->offset = (tok->str[0] - 'a' + 1) * 8;
+  return node;
+}
+
 Node *new_node_num(int val) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = ND_NUM;
@@ -16,8 +23,30 @@ Node *new_node_num(int val) {
   return node;
 }
 
+void program() {
+  int i = 0;
+  for (i = 0; !at_eof(); i++) {
+    code[i] = stmt();
+  }
+  code[i] = NULL;
+}
+
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
+}
+
 Node *expr() {
+  return assign();
+}
+
+Node *assign() {
   Node *node = equality();
+  if (consume("=")) {
+    node = new_node(ND_ASSIGN, node, assign());
+  }
+
   return node;
 }
 
@@ -97,6 +126,12 @@ Node *primary() {
     Node *node = expr();
     expect(")");
     return node;
+  }
+
+  // 変数トークン
+  Token *tok = consume_ident();
+  if (tok) {
+    return new_node_ident(tok);
   }
 
   // そうでなければ数値のはず

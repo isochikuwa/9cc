@@ -16,6 +16,18 @@ bool consume(char *op) {
   return true;
 }
 
+// 次のトークンが変数のときはトークンを1つよみ進めてトークンを返す。
+// それ以外は偽を返す。
+Token *consume_ident() {
+  if (token->kind != TK_IDENT) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
+}
+
 // 次のトークンが期待している記号のときは、トークンを1つ読み進める。
 // それ以外はエラーを報告する。
 void expect(char *op) {
@@ -54,7 +66,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   return tok;
 }
 
-Token *tokenize(char *p) {
+void *tokenize(char *p) {
   Token head;
   head.next = NULL;
   Token *cur = &head;
@@ -72,7 +84,7 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '>' || *p == '<') {
+    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '>' || *p == '<' || *p == '=' || *p == ';') {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -83,9 +95,15 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if ('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT, cur, p++, 1);
+      continue;
+    }
+
     error_at(cur->str, "トークナイズできません");
   }
 
   new_token(TK_EOF, cur, p, 0);
-  return head.next;
+  /* return head.next; */
+  token = head.next;
 }

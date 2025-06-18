@@ -7,6 +7,8 @@ char *user_input;
 Token *token;
 
 Node *code[100];
+// ローカル変数
+LVar *locals;
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -28,7 +30,9 @@ int main(int argc, char **argv) {
   // 変数26個分の領域を確保する
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
+  if (locals) {
+    printf("  sub rsp, %d\n", locals->offset);
+  }
 
   // 戦闘の式から順にコード生成
   for (int i = 0; code[i]; i++) {

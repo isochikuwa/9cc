@@ -28,6 +28,18 @@ Token *consume_ident() {
   return tok;
 }
 
+// 次のトークンがリターンのときはトークンを1つよみ進めて真を返す。
+// それ以外は偽を返す
+// TODO: 他の予約済みキーワードができたら統合したほうがよいか？
+bool consume_return() {
+  if (token->kind != TK_RETURN) {
+    return false;
+  }
+
+  token = token->next;
+  return true;
+}
+
 // 次のトークンが期待している記号のときは、トークンを1つ読み進める。
 // それ以外はエラーを報告する。
 void expect(char *op) {
@@ -56,6 +68,13 @@ bool at_eof() {
   return token->kind == TK_EOF;
 }
 
+int is_alnum(char c) {
+  return ('a' <= c && c <= 'z') ||
+         ('A' <= c && c <= 'Z') ||
+         ('0' <= c && c <= '9') ||
+         (c == '_');
+}
+
 // 新しいトークンを作成してcurに繋げる
 Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   Token *tok = calloc(1, sizeof(Token));
@@ -78,6 +97,12 @@ void *tokenize(char *p) {
       continue;
     }
 
+    if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
+      cur = new_token(TK_RETURN, cur, p, 6);
+      p += 6;
+      continue;
+    }
+
     if (!(strncmp(p, "==", 2) && strncmp(p, "!=", 2) && strncmp(p, ">=", 2) && strncmp(p, "<=", 2))) {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
@@ -95,8 +120,14 @@ void *tokenize(char *p) {
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
+    // 複数文字のローカル変数
+    int i = 0;
+    while ('a' <= *(p+i) && *(p+i) <= 'z') {
+      i++;
+    }
+    if (i > 0) {
+      cur = new_token(TK_IDENT, cur, p, i);
+      p += i;
       continue;
     }
 

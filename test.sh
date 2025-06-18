@@ -41,5 +41,7 @@ assert 1 '9 <= 10;'
 assert 1 '10 <= 10;'
 assert 0 '11 <= 10;'
 assert 5 'a = 3; b = 2; a+b;'
+assert 5 'a = 3; b = 2; c = a + b; return c;'
+assert 7 'foo = 3; bar = 4; return foo + bar;'
 
 echo OK

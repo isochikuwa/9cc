@@ -85,7 +85,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   return tok;
 }
 
-void *tokenize(char *p) {
+void tokenize(char *p) {
   Token head;
   head.next = NULL;
   Token *cur = &head;

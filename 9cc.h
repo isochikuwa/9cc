@@ -77,7 +77,7 @@ void expect(char *op);
 int expect_number();
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-void *tokenize(char *p);
+void tokenize(char *p);
 Node *expr();
 Node *equality();
 Node *relational();

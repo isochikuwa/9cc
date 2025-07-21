@@ -7,6 +7,7 @@ typedef enum {
   TK_RETURN,    // リターン
   TK_IF,        // IF
   TK_ELSE,      // ELSE
+  TK_WHILE,     // WHILE
   TK_EOF,       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -36,6 +37,7 @@ typedef enum {
   ND_NUM,     // 整数
   ND_IF,      // IF
   ND_RETURN,  // リターン
+  ND_WHILE,   // WHILE
 } NodeKind;
 
 typedef struct Node Node;
@@ -77,9 +79,7 @@ Node *new_node_num(int val);
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
-bool consume_return();
-bool consume_if();
-bool consume_else();
+bool consume_token(TokenKind expected);
 Token *consume_ident();
 void expect(char *op);
 int expect_number();

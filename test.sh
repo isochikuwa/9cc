@@ -43,7 +43,10 @@ assert 0 '11 <= 10;'
 assert 5 'a = 3; b = 2; a+b;'
 assert 5 'a = 3; b = 2; c = a + b; return c;'
 assert 7 'foo = 3; bar = 4; return foo + bar;'
-assert 0 'if (10 > 1) return 0; else 1;'
-assert 1 'if (10 < 1) return 0; else 1;'
+assert 10 'a = 2; if (10 > 1) a = 10; return a;'
+assert 2 'a = 2; if (10 < 1) a = 10; return a;'
+assert 5 'a = 2; if (10 < 1) a = 10; else a = 5; return a;'
+assert 1 'if (10 < 1) return 0; else return 1;'
+# assert 10 'i = 0; while (i < 10) i = i + 1; return i;'
 
 echo OK

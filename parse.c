@@ -50,19 +50,24 @@ void program() {
 
 Node *stmt() {
   Node *node;
-  if (consume_return()) {
+  if (consume_token(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
     expect(";");
-  } else if (consume_if()) {
+  } else if (consume_token(TK_IF)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_IF;
     node->condition = expr();
     node->consequence = stmt();
-    if (consume_else()) {
+    if (consume_token(TK_ELSE)) {
       node->alternative = stmt();
     }
+  } else if (consume_token(TK_WHILE)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    node->condition = expr();
+    node->consequence = stmt();
   } else {
     node = expr();
     expect(";");

@@ -5,6 +5,8 @@ typedef enum {
   TK_IDENT,     // 識別子
   TK_NUM,       // 数値
   TK_RETURN,    // リターン
+  TK_IF,        // IF
+  TK_ELSE,      // ELSE
   TK_EOF,       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -32,6 +34,7 @@ typedef enum {
   ND_ASSIGN,  // =
   ND_LVAR,    // ローカル変数
   ND_NUM,     // 整数
+  ND_IF,      // IF
   ND_RETURN,  // リターン
 } NodeKind;
 
@@ -42,6 +45,9 @@ struct Node {
   NodeKind kind;  // ノードの型
   Node *lhs;      // 左辺
   Node *rhs;      // 右辺
+  Node *condition;     // 条件式 IF, WHILE, FOR の場合のみ使う
+  Node *consequence;  // condition が true の場合に評価される。IF, WHLIE, FOR の場合のみ使う
+  Node *alternative;  // condition が false の場合に評価される。IF の場合のみ使う
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
 };
@@ -72,6 +78,8 @@ void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
 bool consume_return();
+bool consume_if();
+bool consume_else();
 Token *consume_ident();
 void expect(char *op);
 int expect_number();
@@ -95,3 +103,5 @@ extern Token *token;
 extern Node *code[];
 // ローカル変数
 extern LVar *locals;
+// goto文用の通し番号
+extern int unique_number;

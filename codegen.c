@@ -21,6 +21,21 @@ void gen(Node *node) {
     return;
   }
 
+  if (node->kind== ND_IF) {
+    gen(node->condition);
+    printf("  pop rax\n");
+    printf("  cmp rax, 0\n");
+    printf("  je .Lelse%d\n", unique_number);
+    gen(node->consequence);
+    printf(".Lelse%d:\n", unique_number);
+    if (node->alternative) {
+      gen(node->alternative);
+    }
+    printf(".Lend%d:\n", unique_number);
+    unique_number++;
+    return;
+  }
+
   switch (node->kind) {
     case ND_NUM:
       printf("  push %d\n", node->val);

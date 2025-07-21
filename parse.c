@@ -90,8 +90,8 @@ Node *stmt() {
     }
     node->consequence = stmt();
   } else if (consume("{")) {
-    NodeList *head = calloc(1, sizeof(NodeList));
-    NodeList *cur = head;
+    NodeList head;
+    NodeList *cur = &head;
     // ブロック処理
     while (!consume("}") && !at_eof()) {
       NodeList *new_node_list = calloc(1, sizeof(NodeList));
@@ -101,7 +101,7 @@ Node *stmt() {
     }
     node = calloc(1, sizeof(Node));
     node->kind = ND_BLOCK;
-    node->statements = head->next;
+    node->statements = head.next;
   } else {
     node = expr();
     expect(";");

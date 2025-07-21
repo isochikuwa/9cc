@@ -13,6 +13,9 @@ typedef enum {
 } TokenKind;
 
 typedef struct Token Token;
+typedef struct Node Node;
+typedef struct LVar LVar;
+typedef struct NodeList NodeList;
 
 struct Token {
   TokenKind kind; // トークンの型
@@ -40,9 +43,9 @@ typedef enum {
   ND_RETURN,  // リターン
   ND_WHILE,   // WHILE
   ND_FOR,     // FOR
+  ND_BLOCK,   // ブロック
 } NodeKind;
 
-typedef struct Node Node;
 
 // 抽象構文木のノードの型
 struct Node {
@@ -54,11 +57,10 @@ struct Node {
   Node *alternative;  // condition が false の場合に評価される。IF の場合のみ使う
   Node *initialize;   // FOR の場合のみ使う
   Node *finalize;   // FOR の場合のみ使う
+  NodeList *statements; // ブロックの場合のみ使う
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
 };
-
-typedef struct LVar LVar;
 
 // ローカル変数の型
 struct LVar {
@@ -66,6 +68,11 @@ struct LVar {
   char *name; // 変数の名前
   int len;    // 名前の長さ;
   int offset; // RBPからのオフセット
+};
+
+struct NodeList {
+  NodeList *next;
+  Node *node;
 };
 
 void program();

@@ -19,6 +19,15 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
+void gen_block(Node *node) {
+  gen_comment(__func__, false);
+  for (NodeList *cur = node->statements; cur; cur = cur->next) {
+    gen(cur->node);
+    printf("  pop rax\n");
+  }
+  gen_comment(__func__, true);
+}
+
 void gen_return(Node *node) {
   gen_comment(__func__, false);
   gen(node->lhs);
@@ -220,6 +229,9 @@ void gen(Node *node) {
   switch (node->kind) {
     case ND_RETURN:
       gen_return(node);
+      break;
+    case ND_BLOCK:
+      gen_block(node);
       break;
     case ND_IF:
       gen_if(node);

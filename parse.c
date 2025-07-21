@@ -89,6 +89,19 @@ Node *stmt() {
       expect(")");
     }
     node->consequence = stmt();
+  } else if (consume("{")) {
+    NodeList *head = calloc(1, sizeof(NodeList));
+    NodeList *cur = head;
+    // ブロック処理
+    while (!consume("}") && !at_eof()) {
+      NodeList *new_node_list = calloc(1, sizeof(NodeList));
+      new_node_list->node = stmt();
+      cur->next = new_node_list;
+      cur = cur->next;
+    }
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->statements = head->next;
   } else {
     node = expr();
     expect(";");

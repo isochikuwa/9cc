@@ -50,5 +50,6 @@ assert 1 'if (10 < 1) return 0; else return 1;'
 assert 10 'i = 0; while (i < 10) i = i + 1; return i;'
 assert 55 'a = 0; for (i = 1; i <= 10; i = i + 1) a = a + i; return a;'
 assert 10 'for (i = 0; i < 10;) i = i + 1; return i;'
+assert 10 'a = 0; for (i = 0; i < 10; i = i + 1) { i = i + 1; } return i;'
 
 echo OK

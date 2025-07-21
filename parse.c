@@ -58,7 +58,9 @@ Node *stmt() {
   } else if (consume_token(TK_IF)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_IF;
+    expect("(");
     node->condition = expr();
+    expect(")");
     node->consequence = stmt();
     if (consume_token(TK_ELSE)) {
       node->alternative = stmt();
@@ -66,7 +68,26 @@ Node *stmt() {
   } else if (consume_token(TK_WHILE)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_WHILE;
+    expect("(");
     node->condition = expr();
+    expect(")");
+    node->consequence = stmt();
+  } else if (consume_token(TK_FOR)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    expect("(");
+    if (!consume(";")) {
+      node->initialize = expr();
+      expect(";");
+    }
+    if (!consume(";")) {
+      node->condition = expr();
+      expect(";");
+    }
+    if (!consume(")")) {
+      node->finalize = expr();
+      expect(")");
+    }
     node->consequence = stmt();
   } else {
     node = expr();

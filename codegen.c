@@ -65,6 +65,27 @@ void gen_while(Node *node) {
   gen_comment(__func__, true);
 }
 
+void gen_for(Node *node) {
+  gen_comment(__func__, false);
+  if (node->initialize) {
+    gen(node->initialize);
+  }
+  printf(".Lbegin%d:\n", unique_number);
+  gen(node->condition);
+  printf("  pop rax\n");
+  printf("  cmp rax, 0\n");
+  printf("  je .Lend%d\n", unique_number);
+  gen(node->consequence);
+  if (node->finalize) {
+    gen(node->finalize);
+  }
+  printf("  jmp .Lbegin%d\n", unique_number);
+  printf(".Lend%d:\n", unique_number);
+  unique_number++;
+  printf("  push rax\n");
+  gen_comment(__func__, true);
+}
+
 void gen_num(Node *node) {
   gen_comment(__func__, false);
   printf("  push %d\n", node->val);
@@ -205,6 +226,9 @@ void gen(Node *node) {
       break;
     case ND_WHILE:
       gen_while(node);
+      break;
+    case ND_FOR:
+      gen_for(node);
       break;
     case ND_NUM:
       gen_num(node);

@@ -64,7 +64,7 @@ void expect(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
       memcmp(token->str, op, token->len)) {
-    error_at(token->str, "'%c'ではありません", op);
+    error_at(token->str, "'%s'ではありません", op);
   }
 
   token = token->next;
@@ -136,6 +136,12 @@ void tokenize(char *p) {
     if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
       cur = new_token(TK_WHILE, cur, p, 5);
       p += 5;
+      continue;
+    }
+
+    if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3])) {
+      cur = new_token(TK_FOR, cur, p, 3);
+      p += 3;
       continue;
     }
 

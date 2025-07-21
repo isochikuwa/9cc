@@ -8,6 +8,7 @@ typedef enum {
   TK_IF,        // IF
   TK_ELSE,      // ELSE
   TK_WHILE,     // WHILE
+  TK_FOR,       // FOR
   TK_EOF,       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -38,6 +39,7 @@ typedef enum {
   ND_IF,      // IF
   ND_RETURN,  // リターン
   ND_WHILE,   // WHILE
+  ND_FOR,     // FOR
 } NodeKind;
 
 typedef struct Node Node;
@@ -50,6 +52,8 @@ struct Node {
   Node *condition;     // 条件式 IF, WHILE, FOR の場合のみ使う
   Node *consequence;  // condition が true の場合に評価される。IF, WHLIE, FOR の場合のみ使う
   Node *alternative;  // condition が false の場合に評価される。IF の場合のみ使う
+  Node *initialize;   // FOR の場合のみ使う
+  Node *finalize;   // FOR の場合のみ使う
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
 };

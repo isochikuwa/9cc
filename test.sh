@@ -47,6 +47,6 @@ assert 10 'a = 2; if (10 > 1) a = 10; return a;'
 assert 2 'a = 2; if (10 < 1) a = 10; return a;'
 assert 5 'a = 2; if (10 < 1) a = 10; else a = 5; return a;'
 assert 1 'if (10 < 1) return 0; else return 1;'
-# assert 10 'i = 0; while (i < 10) i = i + 1; return i;'
+assert 10 'i = 0; while (i < 10) i = i + 1; return i;'
 
 echo OK

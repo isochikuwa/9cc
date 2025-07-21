@@ -52,12 +52,16 @@ void gen_if(Node *node) {
 
 void gen_while(Node *node) {
   gen_comment(__func__, false);
-  printf(".Lbegin%d\n", unique_number);
+  printf(".Lbegin%d:\n", unique_number);
   gen(node->condition);
   printf("  pop rax\n");
   printf("  cmp rax, 0\n");
   printf("  je .Lend%d\n", unique_number);
+  gen(node->consequence);
+  printf("  jmp .Lbegin%d\n", unique_number);
+  printf(".Lend%d:\n", unique_number);
   unique_number++;
+  printf("  push rax\n");
   gen_comment(__func__, true);
 }
 

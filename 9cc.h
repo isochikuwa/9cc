@@ -1,3 +1,6 @@
+#ifndef _H_9CC
+#define _H_9CC
+
 #include <stdbool.h>
 
 typedef enum {
@@ -116,3 +119,5 @@ extern Node *code[];
 extern LVar *locals;
 // goto文用の通し番号
 extern int unique_number;
+
+#endif // _H_9CC

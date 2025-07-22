@@ -44,11 +44,11 @@ char *node_kind_to_string(NodeKind kind) {
 
 void print_node(Node *node, int hierarchy) {
   if (!node) {
-    printf("\n%*s(NULL)\n", hierarchy * 2, "");
+    printf("%*s(NULL)\n", hierarchy * 2, "");
     return;
   }
 
-  printf("\n%*s(%s)\n", hierarchy * 2, "", node_kind_to_string(node->kind));
+  printf("%*s(%s)\n", hierarchy * 2, "", node_kind_to_string(node->kind));
 
   hierarchy++;
   if (node->val) {
@@ -58,35 +58,35 @@ void print_node(Node *node, int hierarchy) {
     printf("%*soffset: %d\n", hierarchy * 2, "", node->offset);
   }
   if (node->lhs) {
-    printf("%*slhs: ", hierarchy * 2, "");
-    print_node(node->lhs, hierarchy);
+    printf("%*slhs:\n", hierarchy * 2, "");
+    print_node(node->lhs, hierarchy+1);
   }
   if (node->rhs) {
-    printf("%*srhs: ", hierarchy * 2, "");
-    print_node(node->rhs, hierarchy);
+    printf("%*srhs:\n", hierarchy * 2, "");
+    print_node(node->rhs, hierarchy+1);
   }
   if (node->condition) {
-    printf("%*scondition: ", hierarchy * 2, "");
-    print_node(node->condition, hierarchy);
+    printf("%*scondition:\n", hierarchy * 2, "");
+    print_node(node->condition, hierarchy+1);
   }
   if (node->consequence) {
-    printf("%*sconsequence: ", hierarchy * 2, "");
-    print_node(node->consequence, hierarchy);
+    printf("%*sconsequence:\n", hierarchy * 2, "");
+    print_node(node->consequence, hierarchy+1);
   }
   if (node->alternative) {
-    printf("%*salternative: ", hierarchy * 2, "");
-    print_node(node->alternative, hierarchy);
+    printf("%*salternative:\n", hierarchy * 2, "");
+    print_node(node->alternative, hierarchy+1);
   }
   if (node->initialize) {
-    printf("%*sinitialize: ", hierarchy * 2, "");
-    print_node(node->initialize, hierarchy);
+    printf("%*sinitialize:\n", hierarchy * 2, "");
+    print_node(node->initialize, hierarchy+1);
   }
   if (node->finalize) {
-    printf("%*sfinalize: ", hierarchy * 2, "");
-    print_node(node->finalize, hierarchy);
+    printf("%*sfinalize:\n", hierarchy * 2, "");
+    print_node(node->finalize, hierarchy+1);
   }
   if (node->statements) {
-    printf("%*sstatements: ", hierarchy * 2, "");
+    printf("%*sstatements:\n", hierarchy * 2, "");
     for(NodeList *cur = node->statements; cur; cur = cur->next) {
       print_node(cur->node, hierarchy+1);
     }

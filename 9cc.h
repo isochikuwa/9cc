@@ -118,7 +118,7 @@ LVar *find_lvar(Token *tok);
 extern char *user_input;
 // 現在着目しているトークン
 extern Token *token;
-extern Node *code[];
+extern NodeList *code;
 // ローカル変数
 extern LVar *locals;
 // goto文用の通し番号

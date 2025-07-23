@@ -7,7 +7,7 @@ char *user_input;
 // 現在着目しているトークン
 Token *token;
 
-Node *code[100];
+NodeList *code;
 // ローカル変数
 LVar *locals;
 
@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
 
   // 3つ目の引数に何か渡されたらデバッグ用コードを動かす
   if (argc == 3) {
-    for (int i = 0; code[i]; i++) {
-      print_node(code[i], 0);
+    for (NodeList *cur = code; cur; cur = cur->next) {
+      print_node(cur->node, 0);
     }
   } else {
     // アセンブリの前半部分を出力
@@ -43,9 +43,9 @@ int main(int argc, char **argv) {
       printf("  sub rsp, %d\n", locals->offset);
     }
 
-    // 戦闘の式から順にコード生成
-    for (int i = 0; code[i]; i++) {
-      gen(code[i]);
+    // 先頭の式から順にコード生成
+    for (NodeList *cur = code; cur; cur = cur->next) {
+      gen(cur->node);
 
       // 式の評価結果としてスタックに1つの値が残っている
       // はずなので、スタックが溢れないようにポップしておく

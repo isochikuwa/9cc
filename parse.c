@@ -59,12 +59,17 @@ NodeList *parse_arguments() {
 }
 
 void program() {
-  int i = 0;
-  for (i = 0; !at_eof(); i++) {
-    // TODO: NodeList に変更する
-    code[i] = function();
+  NodeList head;
+  NodeList *cur = &head;
+  
+  while (!at_eof()) {
+    NodeList *new_node_list = calloc(1, sizeof(NodeList));
+    new_node_list->node = function();
+    cur->next = new_node_list;
+    cur = cur->next;
   }
-  code[i] = NULL;
+  
+  code = head.next;
 }
 
 Node *function() {

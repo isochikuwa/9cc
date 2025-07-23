@@ -40,12 +40,48 @@ Node *new_node_num(int val) {
   return node;
 }
 
+NodeList *parse_arguments() {
+  NodeList head;
+  NodeList *cur = &head;
+
+  while (!consume(")") && !at_eof()) {
+    NodeList *new_node_list = calloc(1, sizeof(NodeList));
+    new_node_list->node = expr();
+    cur->next = new_node_list;
+    cur = cur->next;
+    if (!consume(",")) {
+      expect(")");
+      break;
+    }
+  }
+
+  return head.next;
+}
+
 void program() {
   int i = 0;
   for (i = 0; !at_eof(); i++) {
-    code[i] = stmt();
+    // TODO: NodeList に変更する
+    code[i] = function();
   }
   code[i] = NULL;
+}
+
+Node *function() {
+  Node *node;
+
+  Token *ident = consume_ident();
+  if (!ident) {
+    // TODO: エラー表示
+    return NULL;
+  }
+  node = calloc(1, sizeof(Node));
+  node->kind = ND_FUNCTION;
+  expect("(");
+  node->arguments = parse_arguments(); 
+  node->lhs = stmt();
+
+  return node;
 }
 
 Node *stmt() {
@@ -200,10 +236,18 @@ Node *primary() {
     return node;
   }
 
-  // 変数トークン
   Token *tok = consume_ident();
   if (tok) {
-    return new_node_ident(tok);
+    if (consume("(")) {
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_CALL;
+      // 関数呼び出し
+      node->arguments = parse_arguments();
+      return node;
+    } else {
+      // 変数トークン
+      return new_node_ident(tok);
+    }
   }
 
   // そうでなければ数値のはず

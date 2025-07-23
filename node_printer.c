@@ -39,6 +39,10 @@ char *node_kind_to_string(NodeKind kind) {
       return "ND_FOR";
     case ND_BLOCK:
       return "ND_BLOCK";
+    case ND_CALL:
+      return "ND_CALL";
+    case ND_FUNCTION:
+      return "ND_FUNCTION";
   }
 }
 
@@ -84,6 +88,12 @@ void print_node(Node *node, int hierarchy) {
   if (node->finalize) {
     printf("%*sfinalize:\n", hierarchy * 2, "");
     print_node(node->finalize, hierarchy+1);
+  }
+  if (node->arguments) {
+    printf("%*sarguments:\n", hierarchy * 2, "");
+    for(NodeList *cur = node->arguments; cur; cur = cur->next) {
+      print_node(cur->node, hierarchy+1);
+    }
   }
   if (node->statements) {
     printf("%*sstatements:\n", hierarchy * 2, "");

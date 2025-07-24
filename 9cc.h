@@ -29,26 +29,26 @@ struct Token {
 };
 
 typedef enum {
-  ND_ADD,      // +
-  ND_SUB,      // -
-  ND_MUL,      // *
-  ND_DIV,      // /
-  ND_EQ,       // ==
-  ND_NEQ,      // !=
-  ND_LT,       // <
-  ND_LTE,      // <=
-  ND_GT,       // >
-  ND_GTE,      // >=
-  ND_ASSIGN,   // =
-  ND_LVAR,     // ローカル変数
-  ND_NUM,      // 整数
-  ND_IF,       // IF
-  ND_RETURN,   // リターン
-  ND_WHILE,    // WHILE
-  ND_FOR,      // FOR
-  ND_BLOCK,    // ブロック
-  ND_CALL,     // 関数呼び出し
-  ND_FUNCTION, // 関数
+  ND_ADD,              // +
+  ND_SUB,              // -
+  ND_MUL,              // *
+  ND_DIV,              // /
+  ND_EQ,               // ==
+  ND_NEQ,              // !=
+  ND_LT,               // <
+  ND_LTE,              // <=
+  ND_GT,               // >
+  ND_GTE,              // >=
+  ND_ASSIGN,           // =
+  ND_LVAR,             // ローカル変数
+  ND_NUM,              // 整数
+  ND_IF,               // IF
+  ND_RETURN,           // リターン
+  ND_WHILE,            // WHILE
+  ND_FOR,              // FOR
+  ND_BLOCK,            // ブロック
+  ND_CALL,             // 関数呼び出し
+  ND_FUNCTION,         // 関数
 } NodeKind;
 
 
@@ -66,6 +66,8 @@ struct Node {
   NodeList *arguments; // 関数呼び出し式の場合に使う
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
+  char *name;     // FUNCTIONの場合のみ使う
+  int name_len;   // FUNCTIONの場合のみ使う
 };
 
 // ローカル変数の型
@@ -113,6 +115,7 @@ Node *unary();
 Node *primary();
 void gen(Node *node);
 LVar *find_lvar(Token *tok);
+char *function_name(Node *node);
 
 // 入力プログラム
 extern char *user_input;

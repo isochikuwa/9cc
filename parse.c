@@ -40,9 +40,10 @@ Node *new_node_num(int val) {
   return node;
 }
 
-NodeList *parse_arguments() {
+NodeList *parse_expression_list() {
   NodeList head;
   NodeList *cur = &head;
+  head.next = NULL;
 
   while (!consume(")") && !at_eof()) {
     NodeList *new_node_list = calloc(1, sizeof(NodeList));
@@ -58,9 +59,40 @@ NodeList *parse_arguments() {
   return head.next;
 }
 
+Node *parse_define_variable() {
+  Token *tok = consume_ident();
+
+  if (!tok) {
+    // TODO: エラー処理
+    return NULL;
+  }
+
+  return new_node_ident(tok);
+}
+
+NodeList *parse_function_arguments() {
+  NodeList head;
+  NodeList *cur = &head;
+  head.next = NULL;
+
+  while (!consume(")") && !at_eof()) {
+    NodeList *new_node_list = calloc(1, sizeof(NodeList));
+    new_node_list->node = parse_define_variable();
+    cur->next = new_node_list;
+    cur = cur->next;
+    if (!consume(",")) {
+      expect(")");
+      break;
+    }
+  }
+
+  return head.next;
+}
+
 void program() {
   NodeList head;
   NodeList *cur = &head;
+  head.next = NULL;
   
   while (!at_eof()) {
     NodeList *new_node_list = calloc(1, sizeof(NodeList));
@@ -82,9 +114,20 @@ Node *function() {
   }
   node = calloc(1, sizeof(Node));
   node->kind = ND_FUNCTION;
+  node->name = ident->str;
+  node->name_len = ident->len;
+
+  // ローカル変数初期化
+  locals = NULL;
+
   expect("(");
-  node->arguments = parse_arguments(); 
+  node->arguments = parse_function_arguments(); 
   node->lhs = stmt();
+
+  // 確保したオフセットを記録しておく
+  if (locals) {
+    node->offset = locals->offset;
+  }
 
   return node;
 }
@@ -246,8 +289,10 @@ Node *primary() {
     if (consume("(")) {
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_CALL;
+      node->name = tok->str;
+      node->name_len = tok->len;
       // 関数呼び出し
-      node->arguments = parse_arguments();
+      node->arguments = parse_expression_list();
       return node;
     } else {
       // 変数トークン

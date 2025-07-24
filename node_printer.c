@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "node_printer.h"
 
 char *node_kind_to_string(NodeKind kind) {
@@ -55,6 +56,12 @@ void print_node(Node *node, int hierarchy) {
   printf("%*s(%s)\n", hierarchy * 2, "", node_kind_to_string(node->kind));
 
   hierarchy++;
+  if (node->name) {
+    char name[node->name_len+1];
+    strncpy(name, node->name, node->name_len);
+    name[node->name_len] = '\0';
+    printf("%*sname: %s\n", hierarchy * 2, "", name);
+  }
   if (node->val) {
     printf("%*sval: %d\n", hierarchy * 2, "", node->val);
   }

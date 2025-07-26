@@ -235,6 +235,17 @@ void gen_gte(Node *node) {
   printf("  push rax\n");
 }
 
+void gen_addr(Node *node) {
+  return gen_lval(node->rhs);
+}
+
+void gen_deref(Node *node) {
+  gen(node->rhs);
+  printf("  pop rax\n");
+  printf("  mov rax, [rax]\n");
+  printf("  push rax\n");
+}
+
 void gen(Node *node) {
   switch (node->kind) {
     case ND_RETURN:
@@ -296,6 +307,12 @@ void gen(Node *node) {
       break;
     case ND_GTE:
       gen_gte(node);
+      break;
+    case ND_ADDR:
+      gen_addr(node);
+      break;
+    case ND_DEREF:
+      gen_deref(node);
       break;
     }
 }

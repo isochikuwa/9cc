@@ -44,6 +44,10 @@ char *node_kind_to_string(NodeKind kind) {
       return "ND_CALL";
     case ND_FUNCTION:
       return "ND_FUNCTION";
+    case ND_DEREF:
+      return "ND_DEREF";
+    case ND_ADDR:
+      return "ND_ADDR";
   }
 }
 

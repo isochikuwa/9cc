@@ -28,6 +28,26 @@ Token *consume_ident() {
   return tok;
 }
 
+Token *consume_type() {
+  if (token->kind != TK_IDENT ||
+      strncmp("int", token->str, token->len) != 0) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
+}
+
+Token *expect_type() {
+  Token *tok = consume_type();
+  if (!tok) {
+    error_at(token->str, "型が存在しません");
+  }
+
+  return tok;
+}
+
 // 次のトークンがリターンのときはトークンを1つよみ進めて真を返す。
 // それ以外は偽を返す
 // TODO: 他の予約済みキーワードができたら統合したほうがよいか？

@@ -10,7 +10,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   return node;
 }
 
-Node *new_node_ident(Token *tok) {
+Node *new_node_declared_ident(Token *tok) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = ND_LVAR;
 
@@ -18,18 +18,27 @@ Node *new_node_ident(Token *tok) {
   if (lvar) {
     node->offset = lvar->offset;
   } else {
-    lvar = calloc(1, sizeof(LVar));
-    lvar->next = locals;
-    lvar->name = tok->str;
-    lvar->len = tok->len;
-    if (locals) {
-      lvar->offset = locals->offset + 8;
-    } else {
-      lvar->offset = 8;
-    }
-    node->offset = lvar->offset;
-    locals = lvar;
+    error_at(tok->str, "変数が定義されていません");
   }
+  return node;
+}
+
+Node *new_ident(Token *tok, int offset) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_LVAR;
+
+  LVar *lvar = calloc(1, sizeof(LVar));
+  lvar->next = locals;
+  lvar->name = tok->str;
+  lvar->len = tok->len;
+  if (locals) {
+    lvar->offset = locals->offset + offset;
+  } else {
+    lvar->offset = offset;
+  }
+  node->offset = lvar->offset;
+  locals = lvar;
+
   return node;
 }
 
@@ -60,14 +69,12 @@ NodeList *parse_expression_list() {
 }
 
 Node *parse_define_variable() {
-  Token *tok = consume_ident();
-
-  if (!tok) {
-    // TODO: エラー処理
-    return NULL;
+  Node * node = declare();
+  if (!node) {
+    error_at(token->str, "型が存在しません");
   }
 
-  return new_node_ident(tok);
+  return node;
 }
 
 NodeList *parse_function_arguments() {
@@ -107,10 +114,10 @@ void program() {
 Node *function() {
   Node *node;
 
+  Token *typetok = expect_type();
   Token *ident = consume_ident();
   if (!ident) {
-    // TODO: エラー表示
-    return NULL;
+    error_at(token->str, "識別子がありません");
   }
   node = calloc(1, sizeof(Node));
   node->kind = ND_FUNCTION;
@@ -187,7 +194,10 @@ Node *stmt() {
     node->kind = ND_BLOCK;
     node->statements = head.next;
   } else {
-    node = expr();
+    node = declare();
+    if (!node) {
+      node = expr();
+    }
     expect(";");
   }
   return node;
@@ -302,12 +312,27 @@ Node *primary() {
       return node;
     } else {
       // 変数トークン
-      return new_node_ident(tok);
+      return new_node_declared_ident(tok);
     }
   }
 
   // そうでなければ数値のはず
   return new_node_num(expect_number());
+}
+
+Node *declare() {
+  Node *node;
+  Token *typetok = consume_type();
+  if (typetok) {
+    Token *tok = consume_ident();
+    if (!tok) {
+      error_at(typetok->str, "識別子がありません");
+    }
+    node = new_ident(tok, 8);
+    return node;
+  }
+
+  return NULL;
 }
 
 LVar *find_lvar(Token *tok) {

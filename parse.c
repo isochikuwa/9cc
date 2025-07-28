@@ -23,7 +23,7 @@ Node *new_node_declared_ident(Token *tok) {
   return node;
 }
 
-Node *new_ident(Token *tok, int offset) {
+Node *new_ident(Token *tok, int offset, Type *type) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = ND_LVAR;
 
@@ -31,6 +31,7 @@ Node *new_ident(Token *tok, int offset) {
   lvar->next = locals;
   lvar->name = tok->str;
   lvar->len = tok->len;
+  lvar->type = type;
   if (locals) {
     lvar->offset = locals->offset + offset;
   } else {
@@ -324,11 +325,35 @@ Node *declare() {
   Node *node;
   Token *typetok = consume_type();
   if (typetok) {
+    int pdepth = 0;
+    // 変数名の前に '*' がある場合はポインタ
+    while (consume("*")) {
+      pdepth++;
+    }
+
     Token *tok = consume_ident();
     if (!tok) {
-      error_at(typetok->str, "識別子がありません");
+      error_at(typetok->str + typetok->len, "識別子がありません");
     }
-    node = new_ident(tok, 8);
+
+    Type *type = calloc(1, sizeof(Type));
+    // TODO: 他の型に対応する
+    type->ty = INT;
+    for (int i = 0; i < pdepth; i++) {
+      Type *ptype = calloc(1, sizeof(Type));
+      ptype->ty = PTR;
+      ptype->ptr_to = type;
+      type = ptype;
+    }
+
+    int offset;
+    if (type->ty == INT) {
+      offset = 8;
+    } else if (type->ty == PTR) {
+      offset = 8;
+    }
+
+    node = new_ident(tok, offset, type);
     return node;
   }
 

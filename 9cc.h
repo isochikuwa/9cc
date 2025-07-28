@@ -19,6 +19,7 @@ typedef struct Token Token;
 typedef struct Node Node;
 typedef struct LVar LVar;
 typedef struct NodeList NodeList;
+typedef struct Type Type;
 
 struct Token {
   TokenKind kind; // トークンの型
@@ -78,6 +79,12 @@ struct LVar {
   char *name; // 変数の名前
   int len;    // 名前の長さ;
   int offset; // RBPからのオフセット
+  Type *type; // 変数の型
+};
+
+struct Type {
+  enum { INT, PTR } ty;
+  struct Type *ptr_to;
 };
 
 struct NodeList {

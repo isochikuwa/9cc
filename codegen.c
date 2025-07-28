@@ -145,7 +145,13 @@ void gen_lvar(Node *node) {
 }
 
 void gen_assign(Node *node) {
-  gen_lval(node->lhs);
+  if (node->lhs->kind == ND_DEREF) {
+    // 左辺がポインタだった場合に参照先のポインタがRAXに入るようにする
+    gen(node->lhs->rhs);
+  } else {
+    gen_lval(node->lhs);
+  }
+
   gen(node->rhs);
 
   printf("  pop rdi\n");

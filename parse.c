@@ -279,7 +279,41 @@ Node *mul() {
   }
 }
 
+TyType search_adder_type(Node *node) {
+  int l, r;
+  switch (node->kind) {
+    case ND_NUM:
+      return INT;
+    case ND_ADD:
+    case ND_SUB:
+      l = search_adder_type(node->lhs);
+      r = search_adder_type(node->rhs);
+      if (l == r == INT) {
+        return INT;
+      } else {
+        return PTR;
+      }
+    case ND_LVAR:
+      return node->lvar->type->ty;
+    default:
+      error("計算対象外です");
+  }
+}
+
+int decide_sizeof(TyType t) {
+  switch (t) {
+    case INT:
+      return 8;
+    case PTR:
+      return 8;
+  }
+}
+
 Node *unary() {
+  if (consume_sizeof()) {
+    Node *node = unary();
+    return new_node_num(decide_sizeof(search_adder_type(node)));
+  }
   if (consume("+")) {
     return primary();
   }

@@ -78,6 +78,15 @@ bool consume_else() {
   return true;
 }
 
+bool consume_sizeof() {
+  if (token->kind != TK_SIZEOF) {
+    return false;
+  }
+
+  token = token->next;
+  return true;
+}
+
 // 次のトークンが期待している記号のときは、トークンを1つ読み進める。
 // それ以外はエラーを報告する。
 void expect(char *op) {
@@ -132,6 +141,12 @@ void tokenize(char *p) {
     // 空白文字をスキップ
     if (isspace(*p)) {
       p++;
+      continue;
+    }
+
+    if (strncmp(p, "sizeof", 6) == 0 && !is_alnum(p[6])) {
+      cur = new_token(TK_SIZEOF, cur, p, 6);
+      p += 6;
       continue;
     }
 

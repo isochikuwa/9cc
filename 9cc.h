@@ -12,6 +12,7 @@ typedef enum {
   TK_ELSE,      // ELSE
   TK_WHILE,     // WHILE
   TK_FOR,       // FOR
+  TK_SIZEOF,    // SIZEOF
   TK_EOF,       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -83,8 +84,13 @@ struct LVar {
   Type *type; // 変数の型
 };
 
+typedef enum {
+  INT,
+  PTR,
+} TyType;
+
 struct Type {
-  enum { INT, PTR } ty;
+  TyType ty;
   struct Type *ptr_to;
 };
 
@@ -110,6 +116,7 @@ void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
 bool consume_token(TokenKind expected);
+bool consume_sizeof();
 Token *consume_ident();
 Token *consume_type();
 Token *expect_type();

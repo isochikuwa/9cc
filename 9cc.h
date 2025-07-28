@@ -71,6 +71,7 @@ struct Node {
   int offset;     // kindがND_LVARの場合のみ使う
   char *name;     // FUNCTIONの場合のみ使う
   int name_len;   // FUNCTIONの場合のみ使う
+  LVar *lvar;     // ローカル変数のときは型の情報も持つ
 };
 
 // ローカル変数の型

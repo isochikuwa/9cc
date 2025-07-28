@@ -24,5 +24,6 @@ assert 15 "int foo(int a, int b) { return a + b; } int main() { return foo(10, 5
 assert 25 "int foo(int a, int b) { int c; c = a + b; return c; } int main() { int c; c = foo(10, 5); return 10 + c; }"
 assert 3 "int main() { int a; a = 3; int *b; b = &a; return *b; }"
 assert 3 "int main() { int x; int *y; y = &x; *y = 3; return x; }"
+assert 3 "int main() { int x; int y; int *z; z = &x; z = z - 1; *z = 3; return y; }"
 
 echo OK

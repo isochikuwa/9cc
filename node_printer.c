@@ -51,6 +51,15 @@ char *node_kind_to_string(NodeKind kind) {
   }
 }
 
+char *lvar_type_to_string(int kind) {
+  if (kind == 0) {
+    return "INT";
+  } else if (kind == 1) {
+    return "PTR";
+  }
+  return NULL;
+}
+
 void print_node(Node *node, int hierarchy) {
   if (!node) {
     printf("%*s(NULL)\n", hierarchy * 2, "");
@@ -111,5 +120,11 @@ void print_node(Node *node, int hierarchy) {
     for(NodeList *cur = node->statements; cur; cur = cur->next) {
       print_node(cur->node, hierarchy+1);
     }
+  }
+  if (node->lvar) {
+    printf("%*slvar:\n", hierarchy * 2, "");
+    printf("%*soffset: %d\n", (hierarchy + 2) * 2, "", node->lvar->offset);
+    printf("%*stype:\n", (hierarchy + 2) * 2, "");
+    printf("%*sty: %s\n", (hierarchy + 4) * 2, "", lvar_type_to_string(node->lvar->type->ty));
   }
 }

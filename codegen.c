@@ -170,12 +170,48 @@ void gen_for_infix(Node *node) {
 
 void gen_add(Node *node) {
   gen_for_infix(node);
+
+  // lhsの種類に応じてrdiの値を変化させる
+  if (node->lhs->kind == ND_LVAR) {
+    // 左辺の方によって変化させる値を変える
+    int ratio;
+    if (node->lhs->lvar->type->ty == PTR) {
+      switch (node->lhs->lvar->type->ptr_to->ty) {
+        case INT:
+          ratio = 8;
+          break;
+        case PTR:
+          ratio = 8;
+          break;
+      }
+      printf("  imul rdi, %d\n", ratio);
+    }
+  }
+  
   printf("  add rax, rdi\n");
   printf("  push rax\n");
 }
 
 void gen_sub(Node *node) {
   gen_for_infix(node);
+
+  // lhsの種類に応じてrdiの値を変化させる
+  if (node->lhs->kind == ND_LVAR) {
+    // 左辺の方によって変化させる値を変える
+    int ratio;
+    if (node->lhs->lvar->type->ty == PTR) {
+      switch (node->lhs->lvar->type->ptr_to->ty) {
+        case INT:
+          ratio = 8;
+          break;
+        case PTR:
+          ratio = 8;
+          break;
+      }
+      printf("  imul rdi, %d\n", ratio);
+    }
+  }
+
   printf("  sub rax, rdi\n");
   printf("  push rax\n");
 }

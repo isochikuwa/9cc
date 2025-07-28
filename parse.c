@@ -17,6 +17,7 @@ Node *new_node_declared_ident(Token *tok) {
   LVar *lvar = find_lvar(tok);
   if (lvar) {
     node->offset = lvar->offset;
+    node->lvar = lvar;
   } else {
     error_at(tok->str, "変数が定義されていません");
   }
@@ -38,6 +39,7 @@ Node *new_ident(Token *tok, int offset, Type *type) {
     lvar->offset = offset;
   }
   node->offset = lvar->offset;
+  node->lvar = lvar;
   locals = lvar;
 
   return node;

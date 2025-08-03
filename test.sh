@@ -27,5 +27,12 @@ assert 3 "int main() { int x; int *y; y = &x; *y = 3; return x; }"
 assert 3 "int main() { int x; int y; int *z; z = &x; z = z - 1; *z = 3; return y; }"
 assert 8 "int main() { int a; return sizeof(a); }"
 assert 8 "int main() { int a; return sizeof a; }"
+assert 3 "int main() { int a[10]; int b; b = 3; return b; }"
+assert 3 "int main() { int a; int b; int *c; c = &b; *c = 1; *(c + 1) = 2; return a + b; }"
+assert 3 "int main() { int a[2]; *a = 1; *(a + 1) = 2; int *p; p = a; return *p + *(p + 1); }"
+assert 3 "int main() { int a[2]; int *p; p = a; *p = 1; *(p + 1) = 2; return *p + *(p + 1); }"
+assert 3 "int main() { int a[2]; int *p; p = &a; *p = 1; *(p + 1) = 2; return *p + *(p + 1); }"
+assert 3 "int main() { int a[2]; *a = 1; *(a + 1) = 2; return *a + *(a + 1); }"
+assert 3 "int main() { int a[2]; a[0] = 1; a[1] = 2; return a[0] + a[1]; }"
 
 echo OK

@@ -138,6 +138,12 @@ void gen_num(Node *node) {
 }
 
 void gen_lvar(Node *node) {
+  if (node->lvar->type->ty == ARRAY) {
+    // 配列の場合はポインタをそのまま返す
+    gen_lval(node);
+    return;
+  }
+
   gen_lval(node);
   printf("  pop rax\n");
   printf("  mov rax, [rax]\n");
@@ -168,22 +174,33 @@ void gen_for_infix(Node *node) {
   printf("  pop rax\n");
 }
 
+// TODO: バイナリに書き出す前に値を変化するように修正する
+int calc_offset_ratio(Node *node) {
+  int ratio = 1;
+  if (node->lhs->lvar->type->ty == PTR || node->lhs->lvar->type->ty == ARRAY) {
+    switch (node->lhs->lvar->type->ptr_to->ty) {
+      case INT:
+        ratio = 8;
+        break;
+      case PTR:
+        ratio = 8;
+        break;
+      case ARRAY:
+        ratio = 8;
+        break;
+    }
+  }
+  return ratio;
+}
+
 void gen_add(Node *node) {
   gen_for_infix(node);
 
   // lhsの種類に応じてrdiの値を変化させる
   if (node->lhs->kind == ND_LVAR) {
     // 左辺の方によって変化させる値を変える
-    int ratio;
-    if (node->lhs->lvar->type->ty == PTR) {
-      switch (node->lhs->lvar->type->ptr_to->ty) {
-        case INT:
-          ratio = 8;
-          break;
-        case PTR:
-          ratio = 8;
-          break;
-      }
+    int ratio = calc_offset_ratio(node);
+    if (ratio != 1) {
       printf("  imul rdi, %d\n", ratio);
     }
   }
@@ -196,18 +213,11 @@ void gen_sub(Node *node) {
   gen_for_infix(node);
 
   // lhsの種類に応じてrdiの値を変化させる
+  // TODO: バイナリに書き出す前に値を変化するように修正する
   if (node->lhs->kind == ND_LVAR) {
     // 左辺の方によって変化させる値を変える
-    int ratio;
-    if (node->lhs->lvar->type->ty == PTR) {
-      switch (node->lhs->lvar->type->ptr_to->ty) {
-        case INT:
-          ratio = 8;
-          break;
-        case PTR:
-          ratio = 8;
-          break;
-      }
+    int ratio = calc_offset_ratio(node);
+    if (ratio != 1) {
       printf("  imul rdi, %d\n", ratio);
     }
   }
@@ -278,7 +288,7 @@ void gen_gte(Node *node) {
 }
 
 void gen_addr(Node *node) {
-  return gen_lval(node->rhs);
+  gen_lval(node->rhs);
 }
 
 void gen_deref(Node *node) {

@@ -2,6 +2,7 @@
 #define _H_9CC
 
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum {
   TK_RESERVED,  // 記号
@@ -66,6 +67,7 @@ struct Node {
   Node *alternative;  // condition が false の場合に評価される。IF の場合のみ使う
   Node *initialize;   // FOR の場合のみ使う
   Node *finalize;   // FOR の場合のみ使う
+  Node *index;      // 配列の添字
   NodeList *statements; // ブロックの場合のみ使う
   NodeList *arguments; // 関数呼び出し式の場合に使う
   int val;        // kindがND_NUMの場合のみ使う
@@ -87,11 +89,13 @@ struct LVar {
 typedef enum {
   INT,
   PTR,
+  ARRAY,
 } TyType;
 
 struct Type {
   TyType ty;
   struct Type *ptr_to;
+  size_t array_size;
 };
 
 struct NodeList {
@@ -136,6 +140,7 @@ Node *declare();
 void gen(Node *node);
 LVar *find_lvar(Token *tok);
 char *function_name(Node *node);
+int decide_sizeof(TyType t);
 
 // 入力プログラム
 extern char *user_input;

@@ -306,6 +306,9 @@ int decide_sizeof(TyType t) {
       return 8;
     case PTR:
       return 8;
+    default:
+      // TODO: 型ごとに適切な値にすること
+      return -1;
   }
 }
 
@@ -347,6 +350,14 @@ Node *primary() {
       // 関数呼び出し
       node->arguments = parse_expression_list();
       return node;
+    } else if (consume("[")) {
+      // 配列添字
+      // a[b] => *(a + b) とみなす
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_DEREF;
+      node->rhs = new_node(ND_ADD, new_node_declared_ident(tok), mul());
+      expect("]");
+      return node;
     } else {
       // 変数トークン
       return new_node_declared_ident(tok);
@@ -358,30 +369,52 @@ Node *primary() {
 }
 
 Node *declare() {
-  Node *node;
   Token *typetok = consume_type();
-  if (typetok) {
-    int pdepth = 0;
-    // 変数名の前に '*' がある場合はポインタ
-    while (consume("*")) {
-      pdepth++;
-    }
+  if (!typetok) {
+    return NULL;
+  }
 
-    Token *tok = consume_ident();
-    if (!tok) {
-      error_at(typetok->str + typetok->len, "識別子がありません");
-    }
+  int pdepth = 0;
+  // 変数名の前に '*' がある場合はポインタ
+  while (consume("*")) {
+    pdepth++;
+  }
 
-    Type *type = calloc(1, sizeof(Type));
-    // TODO: 他の型に対応する
-    type->ty = INT;
-    for (int i = 0; i < pdepth; i++) {
-      Type *ptype = calloc(1, sizeof(Type));
-      ptype->ty = PTR;
-      ptype->ptr_to = type;
-      type = ptype;
-    }
+  Token *tok = consume_ident();
+  if (!tok) {
+    error_at(typetok->str + typetok->len, "識別子がありません");
+  }
 
+  Type *type = calloc(1, sizeof(Type));
+
+  type->ty = INT;
+  for (int i = 0; i < pdepth; i++) {
+    Type *ptype = calloc(1, sizeof(Type));
+    ptype->ty = PTR;
+    ptype->ptr_to = type;
+    type = ptype;
+  }
+
+  Node *node;
+  // 配列かどうか
+  if (consume("[")) {
+    Type *ptype = calloc(1, sizeof(Type));
+    ptype->ty = ARRAY;
+    ptype->ptr_to = type;
+
+    Node *index = expr();
+    if (index->kind == ND_NUM) {
+      // 添字がただの数値なら先にoffsetを計算する
+      ptype->array_size = index->val;
+      int offset = ptype->array_size * decide_sizeof(ptype->ptr_to->ty);
+
+      node = new_ident(tok, offset, ptype);
+    } else {
+      // 添字が数値でない場合はここではoffsetを計算せず、後ほど行う
+      // TODO: 添字が数値でない場合の実装
+    }
+    expect("]");
+  } else {
     int offset;
     if (type->ty == INT) {
       offset = 8;
@@ -390,10 +423,9 @@ Node *declare() {
     }
 
     node = new_ident(tok, offset, type);
-    return node;
   }
 
-  return NULL;
+  return node;
 }
 
 LVar *find_lvar(Token *tok) {

@@ -12,14 +12,19 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
 
 Node *new_node_declared_ident(Token *tok) {
   Node *node = calloc(1, sizeof(Node));
-  node->kind = ND_LVAR;
-
   LVar *lvar = find_lvar(tok);
   if (lvar) {
+    node->kind = ND_LVAR;
     node->offset = lvar->offset;
     node->lvar = lvar;
   } else {
-    error_at(tok->str, "変数が定義されていません");
+    GVar *gvar = find_gvar(tok);
+    if (!gvar) {
+      error_at(tok->str, "変数が定義されていません");
+    }
+
+    node->kind = ND_GVAR;
+    node->gvar = gvar;
   }
   return node;
 }
@@ -74,7 +79,7 @@ NodeList *parse_expression_list() {
 Node *parse_define_variable() {
   Node * node = declare();
   if (!node) {
-    error_at(token->str, "型が存在しません");
+    error_at(token->str, "型が存在しません error at parser");
   }
 
   return node;
@@ -105,8 +110,13 @@ void program() {
   head.next = NULL;
   
   while (!at_eof()) {
+    Node *node = global();
+    if (!node) {
+      continue;
+    }
+
     NodeList *new_node_list = calloc(1, sizeof(NodeList));
-    new_node_list->node = function();
+    new_node_list->node = node;
     cur->next = new_node_list;
     cur = cur->next;
   }
@@ -114,29 +124,83 @@ void program() {
   code = head.next;
 }
 
-Node *function() {
-  Node *node;
+void *create_new_global(Token *ident, int size, Type *type) {
+  GVar *gvar = calloc(1, sizeof(GVar));
+  gvar->next = globals;
+  gvar->name = ident->str;
+  gvar->len = ident->len;
+  gvar->type = type;
+  gvar->size = size;
 
+  globals = gvar;
+}
+
+Node *global() {
   Token *typetok = expect_type();
+  int pdepth = 0;
+  // 変数名の前に '*' がある場合はポインタ
+  while (consume("*")) {
+    pdepth++;
+  }
+
   Token *ident = consume_ident();
   if (!ident) {
     error_at(token->str, "識別子がありません");
   }
-  node = calloc(1, sizeof(Node));
-  node->kind = ND_FUNCTION;
+
+  Node *node = calloc(1, sizeof(Node));
   node->name = ident->str;
   node->name_len = ident->len;
 
-  // ローカル変数初期化
-  locals = NULL;
+  if (consume("(")) {
+    // 関数
+    locals = NULL;
+    node->kind = ND_FUNCTION;
+    node->arguments = parse_function_arguments(); 
+    node->lhs = stmt();
 
-  expect("(");
-  node->arguments = parse_function_arguments(); 
-  node->lhs = stmt();
+    // 確保したオフセットを記録しておく
+    if (locals) {
+      node->offset = locals->offset;
+    }
+  } else {
+    // グローバル変数
+    Type *type = calloc(1, sizeof(Type));
+    // TODO: 他の型にも対応する
+    type->ty = INT;
+    for (int i = 0; i < pdepth; i++) {
+      Type *ptype = calloc(1, sizeof(Type));
+      ptype->ty = PTR;
+      ptype->ptr_to = type;
+      type = ptype;
+    }
 
-  // 確保したオフセットを記録しておく
-  if (locals) {
-    node->offset = locals->offset;
+    int size;
+    if (consume("[")) {
+      Type *ptype = calloc(1, sizeof(Type));
+      ptype->ty = ARRAY;
+      ptype->ptr_to = type;
+      type = ptype;
+
+      // 配列
+      Node *index = expr();
+      if (index->kind != ND_NUM) {
+        error_at(token->str, "グローバル変数の配列の添字は数値である必要があります");
+      }
+
+      ptype->array_size = index->val;
+      size = ptype->array_size * 8;
+
+      expect("]");
+    } else {
+      // TODO: 他の型にも対応する
+      type->ty = INT;
+      size = decide_sizeof(type->ty);
+    }
+    create_new_global(ident, size, type);
+    expect(";");
+
+    return NULL;
   }
 
   return node;
@@ -434,5 +498,15 @@ LVar *find_lvar(Token *tok) {
       return var;
     }
   }
+  return NULL;
+}
+
+GVar *find_gvar(Token *tok) {
+  for (GVar *var = globals; var; var = var->next) {
+    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len)) {
+      return var;
+    }
+  }
+
   return NULL;
 }

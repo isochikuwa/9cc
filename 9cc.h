@@ -20,6 +20,7 @@ typedef enum {
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct LVar LVar;
+typedef struct GVar GVar;
 typedef struct NodeList NodeList;
 typedef struct Type Type;
 
@@ -32,28 +33,29 @@ struct Token {
 };
 
 typedef enum {
-  ND_ADD,       // +
-  ND_SUB,       // -
-  ND_MUL,       // *
-  ND_DIV,       // /
-  ND_EQ,        // ==
-  ND_NEQ,       // !=
-  ND_LT,        // <
-  ND_LTE,       // <=
-  ND_GT,        // >
-  ND_GTE,       // >=
-  ND_ASSIGN,    // =
-  ND_LVAR,      // ローカル変数
-  ND_NUM,       // 整数
-  ND_IF,        // IF
-  ND_RETURN,    // リターン
-  ND_WHILE,     // WHILE
-  ND_FOR,       // FOR
-  ND_BLOCK,     // ブロック
-  ND_CALL,      // 関数呼び出し
-  ND_FUNCTION,  // 関数
-  ND_ADDR,      // &
-  ND_DEREF,     // *
+  ND_ADD,           // +
+  ND_SUB,           // -
+  ND_MUL,           // *
+  ND_DIV,           // /
+  ND_EQ,            // ==
+  ND_NEQ,           // !=
+  ND_LT,            // <
+  ND_LTE,           // <=
+  ND_GT,            // >
+  ND_GTE,           // >=
+  ND_ASSIGN,        // =
+  ND_LVAR,          // ローカル変数
+  ND_NUM,           // 整数
+  ND_IF,            // IF
+  ND_RETURN,        // リターン
+  ND_WHILE,         // WHILE
+  ND_FOR,           // FOR
+  ND_BLOCK,         // ブロック
+  ND_CALL,          // 関数呼び出し
+  ND_FUNCTION,      // 関数
+  ND_ADDR,          // &
+  ND_DEREF,         // *
+  ND_GVAR,          // グローバル変数
 } NodeKind;
 
 
@@ -67,7 +69,6 @@ struct Node {
   Node *alternative;  // condition が false の場合に評価される。IF の場合のみ使う
   Node *initialize;   // FOR の場合のみ使う
   Node *finalize;   // FOR の場合のみ使う
-  Node *index;      // 配列の添字
   NodeList *statements; // ブロックの場合のみ使う
   NodeList *arguments; // 関数呼び出し式の場合に使う
   int val;        // kindがND_NUMの場合のみ使う
@@ -75,6 +76,7 @@ struct Node {
   char *name;     // FUNCTIONの場合のみ使う
   int name_len;   // FUNCTIONの場合のみ使う
   LVar *lvar;     // ローカル変数のときは型の情報も持つ
+  GVar *gvar;
 };
 
 // ローカル変数の型
@@ -83,6 +85,15 @@ struct LVar {
   char *name; // 変数の名前
   int len;    // 名前の長さ;
   int offset; // RBPからのオフセット
+  Type *type; // 変数の型
+};
+
+// グローバル変数の型
+struct GVar {
+  GVar *next; // 次の変数かNULL
+  char *name; // 変数の名前
+  int len;    // 名前の長さ;
+  int size;   // 変数の容量
   Type *type; // 変数の型
 };
 
@@ -104,6 +115,7 @@ struct NodeList {
 };
 
 void program();
+Node *global();
 Node *function();
 Node *stmt();
 Node *expr();
@@ -139,6 +151,7 @@ Node *primary();
 Node *declare();
 void gen(Node *node);
 LVar *find_lvar(Token *tok);
+GVar *find_gvar(Token *tok);
 char *function_name(Node *node);
 int decide_sizeof(TyType t);
 
@@ -149,6 +162,8 @@ extern Token *token;
 extern NodeList *code;
 // ローカル変数
 extern LVar *locals;
+// グローバル変数
+extern GVar *globals;
 // goto文用の通し番号
 extern int unique_number;
 

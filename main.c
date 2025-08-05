@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "9cc.h"
 #include "node_printer.h"
 
@@ -10,6 +11,8 @@ Token *token;
 NodeList *code;
 // ローカル変数
 LVar *locals;
+// グローバル変数
+GVar *globals;
 
 int unique_number = 0;
 
@@ -32,6 +35,17 @@ int main(int argc, char **argv) {
   } else {
     // アセンブリの前半部分を出力
     printf(".intel_syntax noprefix\n");
+    // グローバル変数定義を出力する
+    printf(".section .bss\n");
+    for (GVar *val = globals; val; val = val->next) {
+      char name[val->len+1];
+      strncpy(name, val->name, val->len);
+      name[val->len] = '\0';
+      printf("%s:\n", name);
+      printf("  .zero %d\n", val->size);
+    }
+
+    printf(".section .text\n");
     printf(".globl main\n");
 
     // 先頭の式から順にコード生成

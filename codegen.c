@@ -3,15 +3,28 @@
 #include <string.h>
 #include "9cc.h"
 
-const char *pointers[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+const char *rpointer[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+const char *epointer[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+
+char *trim_name(char *str, int len) {
+  char *name = calloc(1, sizeof(len+1));
+  strncpy(name, str, len);
+  name[len] = '\0';
+
+  return name;
+}
 
 void gen_lval(Node *node) {
-  if (node->kind != ND_LVAR) {
+  if (node->kind != ND_LVAR && node->kind != ND_GVAR) {
     error("代入の左辺値が変数ではありません");
   }
 
-  printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n", node->offset);
+  if (node->kind == ND_LVAR) {
+    printf("  lea rax, [rbp-%d]\n", node->offset);
+  } else if (node->kind == ND_GVAR) {
+    char *name = trim_name(node->gvar->name, node->gvar->len);
+    printf("  lea rax, %s[rip]\n", name);
+  }
   printf("  push rax\n");
 }
 
@@ -21,10 +34,7 @@ char *function_name(Node *node) {
     return NULL;
   }
 
-  char *function_name = calloc(1, node->name_len+1);
-  strncpy(function_name, node->name, node->name_len);
-
-  return function_name;
+  return trim_name(node->name, node->name_len);
 }
 
 void gen_block(Node *node) {
@@ -40,7 +50,9 @@ void gen_function(Node *node) {
   printf("  mov rbp, rsp\n");
 
   // ローカル変数用の領域を確保
-  printf("  sub rsp, %d\n", node->offset);
+  if (node->offset > 0) {
+    printf("  sub rsp, %d\n", node->offset);
+  }
 
   int i = 0;
   // arguments
@@ -48,7 +60,8 @@ void gen_function(Node *node) {
     if (cur->node->kind != ND_LVAR) continue;
  
     // 引数をレジスタからスタックに移す
-    printf("  mov [rbp-%d], %s\n", cur->node->offset, pointers[i]);
+    // TODO: 領域が8以外のときで場合分けをする
+    printf("  mov [rbp-%d], %s\n", cur->node->offset, rpointer[i]);
     i++;
   }
 
@@ -67,7 +80,7 @@ void gen_call(Node *node) {
     // 評価した値をレジスタにいれる
     // gcc だと引数の後ろからレジスタに入れてそうだったけど一旦前からいれることとする
     printf("  pop rax\n");
-    printf("  mov %s, rax\n", pointers[i]);
+    printf("  mov %s, rax\n", rpointer[i]);
     i++;
   }
   printf("  call %s\n", function_name(node));
@@ -298,6 +311,18 @@ void gen_deref(Node *node) {
   printf("  push rax\n");
 }
 
+void gen_gvar(Node *node) {
+  if (node->gvar->type->ty == ARRAY) {
+    gen_lval(node);
+    return;
+  }
+
+  gen_lval(node);
+  printf("  pop rax\n");
+  printf("  mov rax, [rax]\n");
+  printf("  push rax\n");
+}
+
 void gen(Node *node) {
   switch (node->kind) {
     case ND_RETURN:
@@ -365,6 +390,9 @@ void gen(Node *node) {
       break;
     case ND_DEREF:
       gen_deref(node);
+      break;
+    case ND_GVAR:
+      gen_gvar(node);
       break;
     }
 }

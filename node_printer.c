@@ -127,8 +127,4 @@ void print_node(Node *node, int hierarchy) {
     printf("%*stype:\n", (hierarchy + 2) * 2, "");
     printf("%*sty: %s\n", (hierarchy + 4) * 2, "", lvar_type_to_string(node->lvar->type->ty));
   }
-  if (node->index) {
-    printf("%*sindex:\n", hierarchy * 2, "");
-    print_node(node->index, hierarchy+1);
-  }
 }

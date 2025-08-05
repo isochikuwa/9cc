@@ -1,5 +1,6 @@
 program     = function*
-function    = type ident "(" (declare (, declare)*)? ")" stmt
+global      = declare ";" | function
+function    = type ident "(" (declare (, declare)*)? ")" (stmt | ";")
 stmt        = expr ";"
               | "{" stmt* "}"
               | "return" expr ";"

@@ -42,7 +42,7 @@ Token *consume_type() {
 Token *expect_type() {
   Token *tok = consume_type();
   if (!tok) {
-    error_at(token->str, "型が存在しません");
+    error_at(token->str, "型が存在しません error at tokenize");
   }
 
   return tok;

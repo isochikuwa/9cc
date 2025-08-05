@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "9cc.h"
 #include "node_printer.h"
@@ -38,11 +39,10 @@ int main(int argc, char **argv) {
     // グローバル変数定義を出力する
     printf(".section .bss\n");
     for (GVar *val = globals; val; val = val->next) {
-      char name[val->len+1];
-      strncpy(name, val->name, val->len);
-      name[val->len] = '\0';
+      char *name = create_string_copy(val->name, val->len);
       printf("%s:\n", name);
       printf("  .zero %d\n", val->size);
+      free(name);
     }
 
     printf(".section .text\n");

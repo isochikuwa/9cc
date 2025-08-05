@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "constants.h"
 
 typedef enum {
   TK_RESERVED,  // 記号
@@ -152,8 +153,12 @@ Node *declare();
 void gen(Node *node);
 LVar *find_lvar(Token *tok);
 GVar *find_gvar(Token *tok);
+char *create_string_copy(const char *src, int len);
 char *function_name(Node *node);
 int decide_sizeof(TyType t);
+Type *parse_type_with_pointers(Token *typetok, int pdepth);
+Node *parse_function_definition(Token *ident, Token *typetok);
+Node *parse_global_variable(Token *ident, Token *typetok, int pdepth);
 
 // 入力プログラム
 extern char *user_input;

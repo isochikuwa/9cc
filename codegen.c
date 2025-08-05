@@ -3,38 +3,39 @@
 #include <string.h>
 #include "9cc.h"
 
-const char *rpointer[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-const char *epointer[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
-
-char *trim_name(char *str, int len) {
-  char *name = calloc(1, sizeof(len+1));
-  strncpy(name, str, len);
+char *create_string_copy(const char *src, int len) {
+  if (!src || len < 0) {
+    return NULL;
+  }
+  char *name = calloc(len + 1, sizeof(char));
+  if (!name) {
+    error("メモリ割り当てに失敗しました");
+  }
+  strncpy(name, src, len);
   name[len] = '\0';
-
   return name;
 }
 
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR && node->kind != ND_GVAR) {
-    error("代入の左辺値が変数ではありません");
+    error(ERR_MSG_LVAL_NOT_VAR);
   }
 
   if (node->kind == ND_LVAR) {
     printf("  lea rax, [rbp-%d]\n", node->offset);
   } else if (node->kind == ND_GVAR) {
-    char *name = trim_name(node->gvar->name, node->gvar->len);
+    char *name = create_string_copy(node->gvar->name, node->gvar->len);
     printf("  lea rax, %s[rip]\n", name);
+    free(name);
   }
   printf("  push rax\n");
 }
 
 char *function_name(Node *node) {
-  if (!(node->name || node->name_len)) {
-    // TODO: エラーハンドリング
+  if (!(node->name && node->name_len > 0)) {
     return NULL;
   }
-
-  return trim_name(node->name, node->name_len);
+  return create_string_copy(node->name, node->name_len);
 }
 
 void gen_block(Node *node) {
@@ -45,7 +46,8 @@ void gen_block(Node *node) {
 }
 
 void gen_function(Node *node) {
-  printf("%s:\n", function_name(node));
+  char *fname = function_name(node);
+  printf("%s:\n", fname);
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
 
@@ -61,7 +63,7 @@ void gen_function(Node *node) {
  
     // 引数をレジスタからスタックに移す
     // TODO: 領域が8以外のときで場合分けをする
-    printf("  mov [rbp-%d], %s\n", cur->node->offset, rpointer[i]);
+    printf("  mov [rbp-%d], %s\n", cur->node->offset, ARG_REGISTERS_64[i]);
     i++;
   }
 
@@ -71,6 +73,8 @@ void gen_function(Node *node) {
   printf("  mov rsp, rbp\n");
   printf("  pop rbp\n");
   printf("  ret\n");
+  
+  free(fname);
 }
 
 void gen_call(Node *node) {
@@ -80,11 +84,13 @@ void gen_call(Node *node) {
     // 評価した値をレジスタにいれる
     // gcc だと引数の後ろからレジスタに入れてそうだったけど一旦前からいれることとする
     printf("  pop rax\n");
-    printf("  mov %s, rax\n", rpointer[i]);
+    printf("  mov %s, rax\n", ARG_REGISTERS_64[i]);
     i++;
   }
-  printf("  call %s\n", function_name(node));
+  char *fname = function_name(node);
+  printf("  call %s\n", fname);
   printf("  push rax\n");
+  free(fname);
 }
 
 void gen_return(Node *node) {
@@ -150,8 +156,16 @@ void gen_num(Node *node) {
   printf("  push %d\n", node->val);
 }
 
-void gen_lvar(Node *node) {
-  if (node->lvar->type->ty == ARRAY) {
+void gen_variable(Node *node) {
+  bool is_array = false;
+  
+  if (node->kind == ND_LVAR && node->lvar->type->ty == ARRAY) {
+    is_array = true;
+  } else if (node->kind == ND_GVAR && node->gvar->type->ty == ARRAY) {
+    is_array = true;
+  }
+  
+  if (is_array) {
     // 配列の場合はポインタをそのまま返す
     gen_lval(node);
     return;
@@ -159,7 +173,7 @@ void gen_lvar(Node *node) {
 
   gen_lval(node);
   printf("  pop rax\n");
-  printf("  mov rax, [rax]\n");
+  printf("  mov rax, [rax]\n");  
   printf("  push rax\n");
 }
 
@@ -311,17 +325,6 @@ void gen_deref(Node *node) {
   printf("  push rax\n");
 }
 
-void gen_gvar(Node *node) {
-  if (node->gvar->type->ty == ARRAY) {
-    gen_lval(node);
-    return;
-  }
-
-  gen_lval(node);
-  printf("  pop rax\n");
-  printf("  mov rax, [rax]\n");
-  printf("  push rax\n");
-}
 
 void gen(Node *node) {
   switch (node->kind) {
@@ -350,7 +353,7 @@ void gen(Node *node) {
       gen_num(node);
       break;
     case ND_LVAR:
-      gen_lvar(node);
+      gen_variable(node);
       break;
     case ND_ASSIGN:
       gen_assign(node);
@@ -392,7 +395,7 @@ void gen(Node *node) {
       gen_deref(node);
       break;
     case ND_GVAR:
-      gen_gvar(node);
+      gen_variable(node);
       break;
     }
 }

@@ -2,6 +2,28 @@
 #include <string.h>
 #include "9cc.h"
 
+Type *parse_type_with_pointers(Token *typetok, int pdepth) {
+  Type *type = calloc(1, sizeof(Type));
+  if (!type) {
+    error("メモリ割り当てに失敗しました");
+  }
+  
+  // TODO: 他の型にも対応する
+  type->ty = INT;
+  
+  for (int i = 0; i < pdepth; i++) {
+    Type *ptype = calloc(1, sizeof(Type));
+    if (!ptype) {
+      error("メモリ割り当てに失敗しました");
+    }
+    ptype->ty = PTR;
+    ptype->ptr_to = type;
+    type = ptype;
+  }
+  
+  return type;
+}
+
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -20,7 +42,7 @@ Node *new_node_declared_ident(Token *tok) {
   } else {
     GVar *gvar = find_gvar(tok);
     if (!gvar) {
-      error_at(tok->str, "変数が定義されていません");
+      error_at(tok->str, ERR_MSG_UNDEFINED_VAR);
     }
 
     node->kind = ND_GVAR;
@@ -79,7 +101,7 @@ NodeList *parse_expression_list() {
 Node *parse_define_variable() {
   Node * node = declare();
   if (!node) {
-    error_at(token->str, "型が存在しません error at parser");
+    error_at(token->str, ERR_MSG_NO_TYPE);
   }
 
   return node;
@@ -135,9 +157,65 @@ void *create_new_global(Token *ident, int size, Type *type) {
   globals = gvar;
 }
 
+Node *parse_function_definition(Token *ident, Token *typetok) {
+  locals = NULL;
+  
+  Node *node = calloc(1, sizeof(Node));
+  if (!node) {
+    error("メモリ割り当てに失敗しました");
+  }
+  
+  node->kind = ND_FUNCTION;
+  node->name = ident->str;
+  node->name_len = ident->len;
+  node->arguments = parse_function_arguments(); 
+  node->lhs = stmt();
+
+  // 確保したオフセットを記録しておく
+  if (locals) {
+    node->offset = locals->offset;
+  }
+  
+  return node;
+}
+
+Node *parse_global_variable(Token *ident, Token *typetok, int pdepth) {
+  Type *type = parse_type_with_pointers(typetok, pdepth);
+  
+  int size;
+  if (consume("[")) {
+    Type *ptype = calloc(1, sizeof(Type));
+    if (!ptype) {
+      error("メモリ割り当てに失敗しました");
+    }
+    ptype->ty = ARRAY;
+    ptype->ptr_to = type;
+    type = ptype;
+
+    // 配列
+    Node *index = expr();
+    if (index->kind != ND_NUM) {
+      error_at(token->str, ERR_MSG_ARRAY_INDEX_NOT_NUM);
+    }
+
+    ptype->array_size = index->val;
+    size = ptype->array_size * WORD_SIZE;
+
+    expect("]");
+  } else {
+    size = decide_sizeof(type->ty);
+  }
+  
+  create_new_global(ident, size, type);
+  expect(";");
+
+  return NULL;
+}
+
 Node *global() {
   Token *typetok = expect_type();
   int pdepth = 0;
+  
   // 変数名の前に '*' がある場合はポインタ
   while (consume("*")) {
     pdepth++;
@@ -145,65 +223,16 @@ Node *global() {
 
   Token *ident = consume_ident();
   if (!ident) {
-    error_at(token->str, "識別子がありません");
+    error_at(token->str, ERR_MSG_NO_IDENTIFIER);
   }
-
-  Node *node = calloc(1, sizeof(Node));
-  node->name = ident->str;
-  node->name_len = ident->len;
 
   if (consume("(")) {
-    // 関数
-    locals = NULL;
-    node->kind = ND_FUNCTION;
-    node->arguments = parse_function_arguments(); 
-    node->lhs = stmt();
-
-    // 確保したオフセットを記録しておく
-    if (locals) {
-      node->offset = locals->offset;
-    }
+    // 関数定義
+    return parse_function_definition(ident, typetok);
   } else {
-    // グローバル変数
-    Type *type = calloc(1, sizeof(Type));
-    // TODO: 他の型にも対応する
-    type->ty = INT;
-    for (int i = 0; i < pdepth; i++) {
-      Type *ptype = calloc(1, sizeof(Type));
-      ptype->ty = PTR;
-      ptype->ptr_to = type;
-      type = ptype;
-    }
-
-    int size;
-    if (consume("[")) {
-      Type *ptype = calloc(1, sizeof(Type));
-      ptype->ty = ARRAY;
-      ptype->ptr_to = type;
-      type = ptype;
-
-      // 配列
-      Node *index = expr();
-      if (index->kind != ND_NUM) {
-        error_at(token->str, "グローバル変数の配列の添字は数値である必要があります");
-      }
-
-      ptype->array_size = index->val;
-      size = ptype->array_size * 8;
-
-      expect("]");
-    } else {
-      // TODO: 他の型にも対応する
-      type->ty = INT;
-      size = decide_sizeof(type->ty);
-    }
-    create_new_global(ident, size, type);
-    expect(";");
-
-    return NULL;
+    // グローバル変数定義
+    return parse_global_variable(ident, typetok, pdepth);
   }
-
-  return node;
 }
 
 Node *stmt() {
@@ -446,18 +475,10 @@ Node *declare() {
 
   Token *tok = consume_ident();
   if (!tok) {
-    error_at(typetok->str + typetok->len, "識別子がありません");
+    error_at(typetok->str + typetok->len, ERR_MSG_NO_IDENTIFIER);
   }
 
-  Type *type = calloc(1, sizeof(Type));
-
-  type->ty = INT;
-  for (int i = 0; i < pdepth; i++) {
-    Type *ptype = calloc(1, sizeof(Type));
-    ptype->ty = PTR;
-    ptype->ptr_to = type;
-    type = ptype;
-  }
+  Type *type = parse_type_with_pointers(typetok, pdepth);
 
   Node *node;
   // 配列かどうか
@@ -479,13 +500,7 @@ Node *declare() {
     }
     expect("]");
   } else {
-    int offset;
-    if (type->ty == INT) {
-      offset = 8;
-    } else if (type->ty == PTR) {
-      offset = 8;
-    }
-
+    int offset = decide_sizeof(type->ty);
     node = new_ident(tok, offset, type);
   }
 

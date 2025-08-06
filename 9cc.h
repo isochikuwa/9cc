@@ -100,6 +100,7 @@ struct GVar {
 
 typedef enum {
   INT,
+  CHAR,
   PTR,
   ARRAY,
 } TyType;

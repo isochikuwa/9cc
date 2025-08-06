@@ -9,7 +9,7 @@ char *create_string_copy(const char *src, int len) {
   }
   char *name = calloc(len + 1, sizeof(char));
   if (!name) {
-    error("メモリ割り当てに失敗しました");
+    error(ERR_MSG_FAILED_TO_ATTACH_MEMORIES);
   }
   strncpy(name, src, len);
   name[len] = '\0';
@@ -60,10 +60,19 @@ void gen_function(Node *node) {
   // arguments
   for (NodeList *cur = node->arguments; cur; cur = cur->next) {
     if (cur->node->kind != ND_LVAR) continue;
- 
+
     // 引数をレジスタからスタックに移す
-    // TODO: 領域が8以外のときで場合分けをする
-    printf("  mov [rbp-%d], %s\n", cur->node->offset, ARG_REGISTERS_64[i]);
+    if (cur->node->lvar->type->ty == INT) {
+      printf("  mov DWORD PTR [rbp-%d], %s\n", cur->node->offset, ARG_REGISTERS_32[i]);
+    } else if (cur->node->lvar->type->ty == CHAR) {
+      printf("  mov BYTE PTR [rbp-%d], %s\n", cur->node->offset, ARG_REGISTERS_8[i]);
+    } else if (cur->node->lvar->type->ty == PTR) {
+      printf("  mov [rbp-%d], %s\n", cur->node->offset, ARG_REGISTERS_64[i]);
+    } else if (cur->node->lvar->type->ty == ARRAY) {
+      printf("  mov [rbp-%d], %s\n", cur->node->offset, ARG_REGISTERS_64[i]);
+    } else {
+      error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
+    }
     i++;
   }
 
@@ -84,7 +93,23 @@ void gen_call(Node *node) {
     // 評価した値をレジスタにいれる
     // gcc だと引数の後ろからレジスタに入れてそうだったけど一旦前からいれることとする
     printf("  pop rax\n");
-    printf("  mov %s, rax\n", ARG_REGISTERS_64[i]);
+    if (cur->node->kind == ND_LVAR) {
+      if (cur->node->lvar->type->ty == INT) {
+        printf("  mov %s, eax\n", ARG_REGISTERS_32[i]);
+      } else if (cur->node->lvar->type->ty == CHAR) {
+        printf("  mov %s, al\n", ARG_REGISTERS_8[i]);
+      } else if (cur->node->lvar->type->ty == PTR) {
+        printf("  mov %s, rax\n", ARG_REGISTERS_64[i]);
+      } else if (cur->node->lvar->type->ty == ARRAY) {
+        printf("  mov %s, rax\n", ARG_REGISTERS_64[i]);
+      } else {
+        error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
+      }
+    } else {
+      if (cur->node->kind == ND_NUM) {
+        printf("  mov %s, eax\n", ARG_REGISTERS_32[i]);
+      }
+    }
     i++;
   }
   char *fname = function_name(node);
@@ -173,7 +198,31 @@ void gen_variable(Node *node) {
 
   gen_lval(node);
   printf("  pop rax\n");
-  printf("  mov rax, [rax]\n");  
+  if (node->kind == ND_LVAR) {
+    if (node->lvar->type->ty == INT) {
+      printf("  mov eax, DWORD PTR [rax]\n");  
+    } else if (node->lvar->type->ty == CHAR) {
+      printf("  movzx rax, BYTE PTR [rax]\n");  
+    } else if (node->lvar->type->ty == PTR) {
+      printf("  mov rax, QWORD PTR [rax]\n");  
+    } else if (node->lvar->type->ty == ARRAY) {
+      printf("  mov rax, QWORD PTR [rax]\n");  
+    } else {
+      error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
+    }
+  } else if (node->kind == ND_GVAR) {
+    if (node->gvar->type->ty == INT) {
+      printf("  mov eax, DWORD PTR [rax]\n");  
+    } else if (node->gvar->type->ty == CHAR) {
+      printf("  movzx rax, BYTE PTR [rax]\n");  
+    } else if (node->gvar->type->ty == PTR) {
+      printf("  mov rax, QWORD PTR [rax]\n");  
+    } else if (node->gvar->type->ty == ARRAY) {
+      printf("  mov rax, QWORD PTR [rax]\n");  
+    } else {
+      error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
+    }
+  }
   printf("  push rax\n");
 }
 
@@ -189,7 +238,41 @@ void gen_assign(Node *node) {
 
   printf("  pop rdi\n");
   printf("  pop rax\n");
-  printf("  mov [rax], rdi\n");
+
+  if (node->lhs->kind == ND_DEREF) {
+    printf("  mov [rax], rdi\n");
+  } else if (node->lhs->kind == ND_LVAR) {
+    switch (node->lhs->lvar->type->ty) {
+      case INT:
+        printf("  mov DWORD PTR [rax], edi\n");
+        break;
+      case CHAR:
+        printf("  mov BYTE PTR [rax], dil\n");
+        break;
+      case PTR:
+      case ARRAY:
+        printf("  mov [rax], rdi\n");
+        break;
+      default:
+        error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
+    }
+  } else if (node->lhs->kind == ND_GVAR) {
+    switch (node->lhs->gvar->type->ty) {
+      case INT:
+        printf("  mov DWORD PTR [rax], edi\n");
+        break;
+      case CHAR:
+        printf("  mov BYTE PTR [rax], dil\n");
+        break;
+      case PTR:
+      case ARRAY:
+        printf("  mov [rax], rdi\n");
+        break;
+      default:
+        error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
+    }
+  }
+  /* printf("  mov [rax], rdi\n"); */
   printf("  push rdi\n");
 }
 
@@ -201,21 +284,10 @@ void gen_for_infix(Node *node) {
   printf("  pop rax\n");
 }
 
-// TODO: バイナリに書き出す前に値を変化するように修正する
 int calc_offset_ratio(Node *node) {
   int ratio = 1;
   if (node->lhs->lvar->type->ty == PTR || node->lhs->lvar->type->ty == ARRAY) {
-    switch (node->lhs->lvar->type->ptr_to->ty) {
-      case INT:
-        ratio = 8;
-        break;
-      case PTR:
-        ratio = 8;
-        break;
-      case ARRAY:
-        ratio = 8;
-        break;
-    }
+    ratio = decide_sizeof(node->lhs->lvar->type->ptr_to->ty);
   }
   return ratio;
 }
@@ -321,7 +393,49 @@ void gen_addr(Node *node) {
 void gen_deref(Node *node) {
   gen(node->rhs);
   printf("  pop rax\n");
-  printf("  mov rax, [rax]\n");
+  // 型を見て適切にメモリアクセスする
+  if (node->rhs->kind == ND_ADD || node->rhs->kind == ND_SUB) {
+    Node *var_node;
+    bool is_lvar = false;
+    if (node->rhs->lhs->kind == ND_LVAR) {
+      var_node = node->rhs->lhs;
+      is_lvar = true;
+    } else if (node->rhs->rhs->kind == ND_LVAR) {
+      var_node = node->rhs->rhs;
+      is_lvar = true;
+    }
+
+    if (is_lvar) {
+      if (var_node->lvar->type->ty == INT) {
+        printf("  mov eax, DWORD PTR [rax]\n");
+      } else if (var_node->lvar->type->ty == CHAR) {
+        printf("  movzx eax, BYTE PTR [rax]\n");
+      } else {
+        printf("  mov rax, [rax]\n");
+      }
+    }
+
+    bool is_gvar = false;
+    if (node->rhs->lhs->kind == ND_GVAR) {
+      var_node = node->rhs->lhs;
+      is_gvar = true;
+    } else if (node->rhs->rhs->kind == ND_GVAR) {
+      var_node = node->rhs->rhs;
+      is_gvar = true;
+    }
+
+    if (is_gvar) {
+      if (var_node->gvar->type->ty == INT) {
+        printf("  mov eax, DWORD PTR [rax]\n");
+      } else if (var_node->gvar->type->ty == CHAR) {
+        printf("  movzx eax, BYTE PTR [rax]\n");
+      } else {
+        printf("  mov rax, [rax]\n");
+      }
+    }
+  } else {
+    printf("  mov rax, [rax]\n");
+  }
   printf("  push rax\n");
 }
 
@@ -353,6 +467,7 @@ void gen(Node *node) {
       gen_num(node);
       break;
     case ND_LVAR:
+    case ND_GVAR:
       gen_variable(node);
       break;
     case ND_ASSIGN:
@@ -393,9 +508,6 @@ void gen(Node *node) {
       break;
     case ND_DEREF:
       gen_deref(node);
-      break;
-    case ND_GVAR:
-      gen_variable(node);
       break;
     }
 }

@@ -51,11 +51,15 @@ char *node_kind_to_string(NodeKind kind) {
   }
 }
 
-char *lvar_type_to_string(int kind) {
-  if (kind == 0) {
+char *lvar_type_to_string(TyType kind) {
+  if (kind == INT) {
     return "INT";
-  } else if (kind == 1) {
+  } else if (kind == CHAR) {
+    return "CHAR";
+  } else if (kind == PTR) {
     return "PTR";
+  } else if (kind == ARRAY) {
+    return "ARRAY";
   }
   return NULL;
 }

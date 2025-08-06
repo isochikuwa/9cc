@@ -9,7 +9,11 @@ Type *parse_type_with_pointers(Token *typetok, int pdepth) {
   }
   
   // TODO: 他の型にも対応する
-  type->ty = INT;
+  if (strncmp("int", typetok->str, typetok->len) == 0) {
+    type->ty = INT;
+  } else if (strncmp("char", typetok->str, typetok->len) == 0) {
+    type->ty = CHAR;
+  }
   
   for (int i = 0; i < pdepth; i++) {
     Type *ptype = calloc(1, sizeof(Type));
@@ -162,7 +166,7 @@ Node *parse_function_definition(Token *ident, Token *typetok) {
   
   Node *node = calloc(1, sizeof(Node));
   if (!node) {
-    error("メモリ割り当てに失敗しました");
+    error(ERR_MSG_FAILED_TO_ATTACH_MEMORIES);
   }
   
   node->kind = ND_FUNCTION;
@@ -186,7 +190,7 @@ Node *parse_global_variable(Token *ident, Token *typetok, int pdepth) {
   if (consume("[")) {
     Type *ptype = calloc(1, sizeof(Type));
     if (!ptype) {
-      error("メモリ割り当てに失敗しました");
+      error(ERR_MSG_FAILED_TO_ATTACH_MEMORIES);
     }
     ptype->ty = ARRAY;
     ptype->ptr_to = type;
@@ -396,12 +400,13 @@ TyType search_adder_type(Node *node) {
 int decide_sizeof(TyType t) {
   switch (t) {
     case INT:
-      return 8;
+      return 4;
+    case CHAR:
+      return 1;
     case PTR:
       return 8;
     default:
-      // TODO: 型ごとに適切な値にすること
-      return -1;
+      error(ERR_MSG_DETECT_UNPARSABLE_TYPE);
   }
 }
 

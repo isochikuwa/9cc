@@ -30,7 +30,8 @@ Token *consume_ident() {
 
 Token *consume_type() {
   if (token->kind != TK_IDENT ||
-      strncmp("int", token->str, token->len) != 0) {
+      (strncmp("int", token->str, 3) != 0 &&
+       strncmp("char", token->str, 4) != 0)) {
     return NULL;
   }
 

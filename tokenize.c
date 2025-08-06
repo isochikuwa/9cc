@@ -48,18 +48,6 @@ Token *expect_type() {
   return tok;
 }
 
-// 次のトークンがリターンのときはトークンを1つよみ進めて真を返す。
-// それ以外は偽を返す
-// TODO: 他の予約済みキーワードができたら統合したほうがよいか？
-bool consume_return() {
-  if (token->kind != TK_RETURN) {
-    return false;
-  }
-
-  token = token->next;
-  return true;
-}
-
 bool consume_token(TokenKind expected) {
   if (token->kind != expected) {
     return false;

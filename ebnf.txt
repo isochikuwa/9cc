@@ -19,5 +19,6 @@ unary       = "sizeof" unary
               | ("+" | "-")? primary
               | ("*" | "&") unary
 primary     = num
+             | string
              | ident ("(" (expr (, expr)*)? ")")?
              | "(" expr ")"

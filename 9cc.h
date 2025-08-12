@@ -15,6 +15,7 @@ typedef enum {
   TK_WHILE,     // WHILE
   TK_FOR,       // FOR
   TK_SIZEOF,    // SIZEOF
+  TK_STRING,    // string
   TK_EOF,       // 入力の終わりを示すトークン
 } TokenKind;
 
@@ -24,6 +25,7 @@ typedef struct LVar LVar;
 typedef struct GVar GVar;
 typedef struct NodeList NodeList;
 typedef struct Type Type;
+typedef struct StringList StringList;
 
 struct Token {
   TokenKind kind; // トークンの型
@@ -57,6 +59,7 @@ typedef enum {
   ND_ADDR,          // &
   ND_DEREF,         // *
   ND_GVAR,          // グローバル変数
+  ND_STRING,        // 文字列
 } NodeKind;
 
 
@@ -78,6 +81,7 @@ struct Node {
   int name_len;   // FUNCTIONの場合のみ使う
   LVar *lvar;     // ローカル変数のときは型の情報も持つ
   GVar *gvar;
+  StringList *string; // 文字列リテラルの場合は文字列の情報を持つ
 };
 
 // ローカル変数の型
@@ -114,6 +118,12 @@ struct Type {
 struct NodeList {
   NodeList *next;
   Node *node;
+};
+
+struct StringList {
+  StringList *next;
+  char *str;
+  int id; // 通し番号
 };
 
 void program();
@@ -172,5 +182,7 @@ extern LVar *locals;
 extern GVar *globals;
 // goto文用の通し番号
 extern int unique_number;
+// 文字列
+extern StringList *strings;
 
 #endif // _H_9CC

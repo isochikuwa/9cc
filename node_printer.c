@@ -48,6 +48,8 @@ char *node_kind_to_string(NodeKind kind) {
       return "ND_DEREF";
     case ND_ADDR:
       return "ND_ADDR";
+    case ND_STRING:
+      return "ND_STRING";
   }
 }
 
@@ -130,5 +132,16 @@ void print_node(Node *node, int hierarchy) {
     printf("%*soffset: %d\n", (hierarchy + 2) * 2, "", node->lvar->offset);
     printf("%*stype:\n", (hierarchy + 2) * 2, "");
     printf("%*sty: %s\n", (hierarchy + 4) * 2, "", lvar_type_to_string(node->lvar->type->ty));
+  }
+  if (node->gvar) {
+    printf("%*sgvar:\n", hierarchy * 2, "");
+    printf("%*ssize: %d\n", (hierarchy + 2) * 2, "", node->gvar->size);
+    printf("%*stype:\n", (hierarchy + 2) * 2, "");
+    printf("%*sty: %s\n", (hierarchy + 4) * 2, "", lvar_type_to_string(node->lvar->type->ty));
+  }
+  if (node->string) {
+    printf("%*sstring:\n", hierarchy * 2, "");
+    printf("%*sid: %d\n", (hierarchy + 2) * 2, "", node->string->id);
+    printf("%*sstr: %s\n", (hierarchy + 2) * 2, "", node->string->str);
   }
 }

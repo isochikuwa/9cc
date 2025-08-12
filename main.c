@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "9cc.h"
 #include "node_printer.h"
 
@@ -14,6 +13,8 @@ NodeList *code;
 LVar *locals;
 // グローバル変数
 GVar *globals;
+// 文字列
+StringList *strings;
 
 int unique_number = 0;
 
@@ -36,6 +37,11 @@ int main(int argc, char **argv) {
   } else {
     // アセンブリの前半部分を出力
     printf(".intel_syntax noprefix\n");
+    printf(".section .rodata\n");
+    for (StringList *cur = strings; cur; cur = cur->next) {
+      printf("msg%d:\n", cur->id);
+      printf("  .asciz %s\n", cur->str);
+    }
     // グローバル変数定義を出力する
     printf(".section .bss\n");
     for (GVar *val = globals; val; val = val->next) {

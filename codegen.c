@@ -1,20 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "9cc.h"
-
-char *create_string_copy(const char *src, int len) {
-  if (!src || len < 0) {
-    return NULL;
-  }
-  char *name = calloc(len + 1, sizeof(char));
-  if (!name) {
-    error(ERR_MSG_FAILED_TO_ATTACH_MEMORIES);
-  }
-  strncpy(name, src, len);
-  name[len] = '\0';
-  return name;
-}
 
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR && node->kind != ND_GVAR) {
@@ -439,6 +425,10 @@ void gen_deref(Node *node) {
   printf("  push rax\n");
 }
 
+void gen_string(Node *node) {
+  printf("  lea rax, msg%d[rip]\n", node->string->id);
+  printf("  push rax\n");
+}
 
 void gen(Node *node) {
   switch (node->kind) {
@@ -509,5 +499,7 @@ void gen(Node *node) {
     case ND_DEREF:
       gen_deref(node);
       break;
+    case ND_STRING:
+      gen_string(node);
     }
 }

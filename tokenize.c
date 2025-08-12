@@ -121,6 +121,17 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   return tok;
 }
 
+int string_length(char *p) {
+  if (*p != '"') return 0;
+
+  int i = 1;
+  while (*(p + i) != '"') {
+    i++;
+  }
+
+  return i + 1;
+}
+
 void tokenize(char *p) {
   Token head;
   head.next = NULL;
@@ -130,6 +141,14 @@ void tokenize(char *p) {
     // 空白文字をスキップ
     if (isspace(*p)) {
       p++;
+      continue;
+    }
+
+    int len = string_length(p);
+    if (len > 0) {
+      // string
+      cur = new_token(TK_STRING, cur, p, len);
+      p += len;
       continue;
     }
 

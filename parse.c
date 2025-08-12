@@ -430,6 +430,34 @@ Node *unary() {
   return primary();
 }
 
+Token *consume_string() {
+  if (token->kind != TK_STRING) return NULL;
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
+}
+
+Node *parse_string(Token *tok) {
+  char *str = create_string_copy(tok->str, tok->len);
+
+  StringList *string = calloc(1, sizeof(StringList));
+  string->str = str;
+  string->next = strings;
+  if (strings) {
+    string->id = strings->id + 1;
+  } else {
+    string->id = 0;
+  }
+  strings = string;
+
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_STRING;
+  node->string = string;
+
+  return node;
+}
+
 Node *primary() {
   // 次のトークンが"("なら、"(" expr ")"のはず
   if (consume("(")) {
@@ -438,13 +466,19 @@ Node *primary() {
     return node;
   }
 
-  Token *tok = consume_ident();
-  if (tok) {
+  Token *str_token = consume_string();
+  if (str_token) {
+    Node *node = parse_string(str_token);
+    return node;
+  }
+
+  Token *ident_token = consume_ident();
+  if (ident_token) {
     if (consume("(")) {
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_CALL;
-      node->name = tok->str;
-      node->name_len = tok->len;
+      node->name = ident_token->str;
+      node->name_len = ident_token->len;
       // 関数呼び出し
       node->arguments = parse_expression_list();
       return node;
@@ -453,12 +487,12 @@ Node *primary() {
       // a[b] => *(a + b) とみなす
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_DEREF;
-      node->rhs = new_node(ND_ADD, new_node_declared_ident(tok), mul());
+      node->rhs = new_node(ND_ADD, new_node_declared_ident(ident_token), mul());
       expect("]");
       return node;
     } else {
       // 変数トークン
-      return new_node_declared_ident(tok);
+      return new_node_declared_ident(ident_token);
     }
   }
 

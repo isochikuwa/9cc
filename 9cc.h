@@ -126,7 +126,7 @@ struct StringList {
   int id; // 通し番号
 };
 
-void program();
+NodeList *program();
 Node *global();
 Node *function();
 Node *stmt();
@@ -175,7 +175,6 @@ Node *parse_global_variable(Token *ident, Token *typetok, int pdepth);
 extern char *user_input;
 // 現在着目しているトークン
 extern Token *token;
-extern NodeList *code;
 // ローカル変数
 extern LVar *locals;
 // グローバル変数

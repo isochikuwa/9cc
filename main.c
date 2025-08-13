@@ -9,8 +9,6 @@
 char *user_input;
 // 現在着目しているトークン
 Token *token;
-
-NodeList *code;
 // ローカル変数
 LVar *locals;
 // グローバル変数
@@ -58,13 +56,18 @@ int main(int argc, char **argv) {
 
   // トークナイズしてパースする
   filename = argv[1];
-  user_input = read_file(filename);
+  if (argc == 3 && strcmp(argv[2], "t") == 0) {
+    // テスト用にコードを引数から直接読み込む
+    user_input = argv[1];
+  } else {
+    user_input = read_file(filename);
+  }
   tokenize(user_input);
-  program();
+  NodeList *codes = program();
 
-  // 3つ目の引数に何か渡されたらデバッグ用コードを動かす
-  if (argc == 3) {
-    for (NodeList *cur = code; cur; cur = cur->next) {
+  // 3つ目の引数に d を渡されたらデバッグ用コードを動かす
+  if (argc == 3 && strcmp(argv[2], "d") == 0) {
+    for (NodeList *cur = codes; cur; cur = cur->next) {
       print_node(cur->node, 0);
     }
   } else {
@@ -88,7 +91,7 @@ int main(int argc, char **argv) {
     printf(".globl main\n");
 
     // 先頭の式から順にコード生成
-    for (NodeList *cur = code; cur; cur = cur->next) {
+    for (NodeList *cur = codes; cur; cur = cur->next) {
       gen(cur->node);
     }
 

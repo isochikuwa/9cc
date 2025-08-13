@@ -130,7 +130,7 @@ NodeList *parse_function_arguments() {
   return head.next;
 }
 
-void program() {
+NodeList *program() {
   NodeList head;
   NodeList *cur = &head;
   head.next = NULL;
@@ -147,7 +147,7 @@ void program() {
     cur = cur->next;
   }
   
-  code = head.next;
+  return head.next;
 }
 
 void *create_new_global(Token *ident, int size, Type *type) {

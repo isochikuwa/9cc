@@ -185,4 +185,6 @@ extern int unique_number;
 // 文字列
 extern StringList *strings;
 
+extern char *filename;
+
 #endif // _H_9CC

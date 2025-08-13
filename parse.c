@@ -150,13 +150,14 @@ NodeList *program() {
   return head.next;
 }
 
-void create_new_global(Token *ident, int size, Type *type) {
+void create_new_global(Token *ident, int size, Type *type, int val) {
   GVar *gvar = calloc(1, sizeof(GVar));
   gvar->next = globals;
   gvar->name = ident->str;
   gvar->len = ident->len;
   gvar->type = type;
   gvar->size = size;
+  gvar->val = val;
 
   globals = gvar;
 }
@@ -210,7 +211,15 @@ Node *parse_global_variable(Token *ident, Token *typetok, int pdepth) {
     size = decide_sizeof(type->ty);
   }
   
-  create_new_global(ident, size, type);
+  // 初期化式の場合、初期化する値を覚えておく必要がある
+  int val = 0;
+  if (consume("=")) {
+    Node *right = assign();
+    // あらかじめ計算する
+    val = Node_calc(right);
+  }
+  create_new_global(ident, size, type, val);
+
   expect(";");
 
   return NULL;

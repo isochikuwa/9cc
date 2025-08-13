@@ -100,6 +100,7 @@ struct GVar {
   int len;    // 名前の長さ;
   int size;   // 変数の容量
   Type *type; // 変数の型
+  int val;    // 初期値
 };
 
 typedef enum {
@@ -170,6 +171,7 @@ int decide_sizeof(TyType t);
 Type *parse_type_with_pointers(Token *typetok, int pdepth);
 Node *parse_function_definition(Token *ident, Token *typetok);
 Node *parse_global_variable(Token *ident, Token *typetok, int pdepth);
+int Node_calc(Node *node);
 
 // 入力プログラム
 extern char *user_input;

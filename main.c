@@ -80,11 +80,19 @@ int main(int argc, char **argv) {
       printf("  .asciz %s\n", cur->str);
     }
     // グローバル変数定義を出力する
-    printf(".section .bss\n");
+    printf(".section .data\n");
     for (GVar *val = globals; val; val = val->next) {
       char *name = create_string_copy(val->name, val->len);
       printf("%s:\n", name);
-      printf("  .zero %d\n", val->size);
+      if (val->val == 0) {
+        printf("  .zero %d\n", val->size);
+      } else {
+        if (val->type->ty == INT) {
+          printf("  .long %d\n", val->val);
+        } else if (val->type->ty == CHAR) {
+          printf("  .byte %d\n", val->val);
+        }
+      }
       free(name);
     }
 

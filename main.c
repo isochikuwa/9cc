@@ -55,11 +55,12 @@ int main(int argc, char **argv) {
   }
 
   // トークナイズしてパースする
-  filename = argv[1];
   if (argc == 3 && strcmp(argv[2], "t") == 0) {
     // テスト用にコードを引数から直接読み込む
+    filename = "";
     user_input = argv[1];
   } else {
+    filename = argv[1];
     user_input = read_file(filename);
   }
   tokenize(user_input);

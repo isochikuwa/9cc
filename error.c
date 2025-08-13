@@ -23,7 +23,7 @@ void error_at(char *loc, char *fmt, ...) {
   }
 
   char *end = loc;
-  while (*end != '\n') {
+  while (*end != '\n' && *end != '\0') {
     end++;
   }
 

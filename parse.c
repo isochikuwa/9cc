@@ -150,7 +150,7 @@ NodeList *program() {
   return head.next;
 }
 
-void *create_new_global(Token *ident, int size, Type *type) {
+void create_new_global(Token *ident, int size, Type *type) {
   GVar *gvar = calloc(1, sizeof(GVar));
   gvar->next = globals;
   gvar->name = ident->str;

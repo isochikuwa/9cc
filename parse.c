@@ -295,7 +295,11 @@ Node *stmt() {
     node->statements = head.next;
   } else {
     node = declare();
-    if (!node) {
+    if (node) {
+      if (consume("=")) {
+        node = new_node(ND_ASSIGN, node, assign());
+      }
+    } else {
       node = expr();
     }
     expect(";");

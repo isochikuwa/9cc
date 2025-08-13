@@ -7,7 +7,7 @@ stmt        = expr ";"
               | "if" "(" expr ")" stmt ("else" stmt)?
               | "while" "(" expr ")" stmt
               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-              | declare ";"
+              | declare ("=" assign)? ";"
 declare     = type ident
 expr        = assign
 assign      = equality ("=" assign)?

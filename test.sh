@@ -38,5 +38,6 @@ assert 3 "int a[2]; int main() { a[0] = 1; a[1] = 2; return a[0] + a[1]; }"
 assert 8 "int a[3]; int main() { a[0] = 3; a[1] = 1; a[2] = 5; return a[0] + a[1] * a[2]; }"
 assert 3 "int main() { int x[3]; x[0] = -1; x[1] = 2; int y; y = 4; return x[0] + y; }"
 assert 3 "int main() { char x[3]; x[0] = -1; x[1] = 2; int y; y = 4; return x[0] + y; }"
+assert 3 "int main() { int x = 3; return x; }"
 
 echo OK
